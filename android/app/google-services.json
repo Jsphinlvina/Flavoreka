@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "997570461834",
+    "project_id": "flavoreka",
+    "storage_bucket": "flavoreka.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:997570461834:android:f146a386420c33c2532d73",
+        "android_client_info": {
+          "package_name": "com.jsphine.flavoreka"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKxsZMPLdO0bbPF7AfXTRVi9OyVQ800VY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
