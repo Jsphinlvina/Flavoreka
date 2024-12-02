@@ -12,7 +12,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Panggil fetchRecipes sekali tanpa mendengarkan perubahan state
     Provider.of<RecipeProvider>(context, listen: false).fetchRecipes();
   }
 

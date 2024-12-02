@@ -10,8 +10,16 @@ class RecipeProvider extends ChangeNotifier {
 
   // Ambil semua resep
   Future<void> fetchRecipes() async {
-    _recipes = await _controller.getAllRecipes();
-    notifyListeners(); 
+    try {
+      _recipes = await _controller.getAllRecipes();
+      print("Recipes fetched: ${_recipes.length}");
+      for (var recipe in _recipes) {
+        print("Recipe: ${recipe.title}, Ingredients: ${recipe.ingredients}");
+      }
+      notifyListeners();
+    } catch (e) {
+      print("Error fetching recipes: $e");
+    }
   }
 
   // Tambah resep
