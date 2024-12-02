@@ -6,22 +6,22 @@ class RecipeController {
       FirebaseFirestore.instance.collection('recipes');
 
   // Tambah resep
-  Future<void> addRecipe(RecipeModel recipe) async {
+  Future<void> addRecipe(Recipe recipe) async {
     await _recipeCollection.add(recipe.toMap());
   }
 
   // Ambil semua resep
-  Future<List<RecipeModel>> getAllRecipes() async {
+  Future<List<Recipe>> getAllRecipes() async {
     QuerySnapshot snapshot = await _recipeCollection.get();
     return snapshot.docs.map((doc) {
-      return RecipeModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+      return Recipe.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
     }).toList();
   }
 
   // Ambil detail resep
-  Future<RecipeModel> getRecipeById(String id) async {
+  Future<Recipe> getRecipeById(String id) async {
     DocumentSnapshot doc = await _recipeCollection.doc(id).get();
-    return RecipeModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+    return Recipe.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
   }
 
   // Hapus resep

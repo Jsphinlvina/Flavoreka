@@ -1,12 +1,12 @@
-class RecipeModel {
+class Recipe {
   String id;
   String title;
   List<String> ingredients;
   List<String> steps;
-  String imageUrl; // URL gambar (misalnya dari internet)
-  String userId;   // ID pengguna untuk autentikasi
+  String imageUrl;
+  String userId;
 
-  RecipeModel({
+  Recipe({
     required this.id,
     required this.title,
     required this.ingredients,
@@ -15,26 +15,24 @@ class RecipeModel {
     required this.userId,
   });
 
-  // Konversi dari Firestore ke objek RecipeModel
-  factory RecipeModel.fromFirestore(Map<String, dynamic> data, String id) {
-    return RecipeModel(
+  factory Recipe.fromFirestore(Map<String, dynamic> data, String id) {
+    return Recipe(
       id: id,
       title: data['title'],
       ingredients: List<String>.from(data['ingredients']),
       steps: List<String>.from(data['steps']),
       imageUrl: data['image_url'],
-      userId: data['user_id'],
+      userId: data['user_name'],
     );
   }
 
-  // Konversi dari RecipeModel ke Map untuk Firestore
   Map<String, dynamic> toMap() {
     return {
       'title': title,
       'ingredients': ingredients,
       'steps': steps,
       'image_url': imageUrl,
-      'user_id': userId,
+      'user_name': userId,
     };
   }
 }

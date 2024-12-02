@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '997570461834',
     projectId: 'flavoreka',
     storageBucket: 'flavoreka.firebasestorage.app',
-    iosBundleId: 'com.example.flavoreka',
+    iosBundleId: 'com.jsphine.flavoreka',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -72,7 +72,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '997570461834',
     projectId: 'flavoreka',
     storageBucket: 'flavoreka.firebasestorage.app',
-    iosBundleId: 'com.example.flavoreka',
+    iosBundleId: 'com.jsphine.flavoreka',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

@@ -1,4 +1,4 @@
-package com.example.flavoreka
+package com.jsphine.flavoreka
 
 import io.flutter.embedding.android.FlutterActivity
 
