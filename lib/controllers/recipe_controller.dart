@@ -12,7 +12,7 @@ class RecipeController {
 
   // Ambil semua resep
   Future<List<Recipe>> getAllRecipes() async {
-    QuerySnapshot snapshot = await _recipeCollection.get();
+    QuerySnapshot snapshot = await _recipeCollection.orderBy('createdAt', descending: true).get();
     return snapshot.docs.map((doc) {
       return Recipe.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
     }).toList();
