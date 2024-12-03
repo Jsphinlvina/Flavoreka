@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/recipe_provider.dart';
+import '../widgets/navbar.dart';
+import 'recipe_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,6 +12,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String _searchQuery = ""; // Variabel untuk menyimpan query pencarian
+
   @override
   void initState() {
     super.initState();
@@ -20,30 +24,94 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final recipeProvider = Provider.of<RecipeProvider>(context);
 
+    // Filter resep berdasarkan query pencarian
+    final filteredRecipes = recipeProvider.recipes.where((recipe) {
+      final query = _searchQuery.toLowerCase();
+      return recipe.title.toLowerCase().contains(query) ||
+          recipe.ingredients.any((ingredient) =>
+              ingredient.toLowerCase().contains(query));
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Flavoreka"),
       ),
-      body: recipeProvider.recipes.isEmpty
-          ? const Center(child: Text("Tidak ada resep untuk ditampilkan"))
-          : ListView.builder(
-              itemCount: recipeProvider.recipes.length,
-              itemBuilder: (context, index) {
-                final recipe = recipeProvider.recipes[index];
-                return ListTile(
-                  leading: Image.network(
-                    recipe.imageUrl,
-                    width: 50,
-                    height: 50,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.image_not_supported),
-                  ),
-                  title: Text(recipe.title),
-                  subtitle: Text("Favorites: ${recipe.favoritesCount}"),
-                  trailing: Text(recipe.createdAt.toLocal().toString().split(' ')[0]),
-                );
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: "Search recipes...",
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value; // Perbarui query pencarian
+                });
               },
             ),
+          ),
+          // Daftar Resep
+          Expanded(
+            child: filteredRecipes.isEmpty
+                ? const Center(child: Text("No recipes found"))
+                : ListView.builder(
+                    itemCount: filteredRecipes.length,
+                    itemBuilder: (context, index) {
+                      final recipe = filteredRecipes[index];
+                      return ListTile(
+                        leading: Image.network(
+                          recipe.imageUrl,
+                          width: 50,
+                          height: 50,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.image_not_supported),
+                        ),
+                        title: Text(recipe.title),
+                        subtitle: Text("Favorites: ${recipe.favoritesCount}"),
+                        trailing: Text(recipe.createdAt
+                            .toLocal()
+                            .toString()
+                            .split(' ')[0]),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  RecipeDetailScreen(recipe: recipe),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: Navbar(
+        currentIndex: 0, // Home
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushReplacementNamed(context, '/home');
+              break;
+            case 1:
+              Navigator.pushReplacementNamed(context, '/my-recipes');
+              break;
+            case 2:
+              Navigator.pushReplacementNamed(context, '/favorites');
+              break;
+            case 3:
+              Navigator.pushReplacementNamed(context, '/account');
+              break;
+          }
+        },
+      ),
     );
   }
 }

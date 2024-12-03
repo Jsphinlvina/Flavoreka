@@ -16,9 +16,16 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => RecipeProvider(), // Inisialisasi RecipeProvider
+      create: (_) => RecipeProvider(),
       child: MaterialApp(
-        home: HomeScreen(),
+        debugShowCheckedModeBanner: false,
+        initialRoute: '/home',
+        routes: {
+          '/home': (context) => const HomeScreen(),
+          // '/my-recipes': (context) => const MyRecipes(),
+          // '/favorites': (context) => const FavoriteRecipes(),
+          // '/account': (context) => const Account(),
+        },
       ),
     );
   }
