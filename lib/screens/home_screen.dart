@@ -12,7 +12,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _searchQuery = ""; // Variabel untuk menyimpan query pencarian
+  String _searchQuery = "";
 
   @override
   void initState() {
@@ -24,7 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final recipeProvider = Provider.of<RecipeProvider>(context);
 
-    // Filter resep berdasarkan query pencarian
     final filteredRecipes = recipeProvider.recipes.where((recipe) {
       final query = _searchQuery.toLowerCase();
       return recipe.title.toLowerCase().contains(query) ||
@@ -38,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // Search Bar
+          // Search bar
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -51,12 +50,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               onChanged: (value) {
                 setState(() {
-                  _searchQuery = value; // Perbarui query pencarian
+                  _searchQuery = value;
                 });
               },
             ),
           ),
-          // Daftar Resep
+          // Recipe list
           Expanded(
             child: filteredRecipes.isEmpty
                 ? const Center(child: Text("No recipes found"))
@@ -94,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       bottomNavigationBar: Navbar(
-        currentIndex: 0, // Home
+        currentIndex: 0,
         onTap: (index) {
           switch (index) {
             case 0:
