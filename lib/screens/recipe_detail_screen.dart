@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/recipe_model.dart';
+import '../utils/auth_service.dart';
+import '../providers/recipe_provider.dart';
+import 'add_recipe_screen.dart';
 
 class RecipeDetailScreen extends StatelessWidget {
   final Recipe recipe;
@@ -8,9 +13,70 @@ class RecipeDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final currentUserId = authService.currentUser?.uid;
+    final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
+
+    // Format tanggal untuk createdAt
+    final String formattedDate =
+        DateFormat('yyyy-MM-dd').format(recipe.createdAt);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(recipe.title),
+        actions: [
+          if (currentUserId == recipe.userId) ...[
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddRecipeScreen(recipe: recipe),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Delete Recipe"),
+                    content: const Text(
+                        "Are you sure you want to delete this recipe?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("Cancel"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text("Delete"),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  try {
+                    await recipeProvider.deleteRecipe(recipe.id);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text("Recipe deleted successfully.")),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Failed to delete recipe: $e")),
+                    );
+                  }
+                }
+              },
+            ),
+          ]
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -32,7 +98,7 @@ class RecipeDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text("Favorites: ${recipe.favoritesCount}"),
-            Text("Created at: ${recipe.createdAt.toLocal()}"),
+            Text("Created at: $formattedDate"),
             const SizedBox(height: 16),
             const Text(
               "Ingredients:",

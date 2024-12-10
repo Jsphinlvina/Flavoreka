@@ -28,7 +28,8 @@ class Recipe {
       ingredients: List<String>.from(data['ingredients'] ?? []),
       steps: List<String>.from(data['steps'] ?? []),
       userId: data['userId'] ?? '',
-      createdAt: DateTime.parse(data['createdAt'] ?? DateTime.now().toIso8601String()),
+      createdAt:
+          DateTime.parse(data['createdAt'] ?? DateTime.now().toIso8601String()),
       favoritesCount: data['favoritesCount'] ?? 0,
     );
   }
@@ -44,5 +45,28 @@ class Recipe {
       'createdAt': createdAt.toIso8601String(),
       'favoritesCount': favoritesCount,
     };
+  }
+
+  // Method copyWith untuk memperbarui properti
+  Recipe copyWith({
+    String? id,
+    String? title,
+    String? imageUrl,
+    List<String>? ingredients,
+    List<String>? steps,
+    String? userId,
+    DateTime? createdAt,
+    int? favoritesCount,
+  }) {
+    return Recipe(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      imageUrl: imageUrl ?? this.imageUrl,
+      ingredients: ingredients ?? this.ingredients,
+      steps: steps ?? this.steps,
+      userId: userId ?? this.userId,
+      createdAt: createdAt ?? this.createdAt,
+      favoritesCount: favoritesCount ?? this.favoritesCount,
+    );
   }
 }

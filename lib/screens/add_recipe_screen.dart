@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../utils/auth_service.dart';
-import '../providers/recipe_provider.dart';
 import '../models/recipe_model.dart';
 
 class AddRecipeScreen extends StatefulWidget {
-  const AddRecipeScreen({super.key});
+  final Recipe? recipe; // Parameter opsional untuk mode edit
+
+  const AddRecipeScreen({super.key, this.recipe});
 
   @override
   _AddRecipeScreenState createState() => _AddRecipeScreenState();
@@ -18,44 +17,30 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final TextEditingController _ingredientsController = TextEditingController();
   final TextEditingController _stepsController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    // Jika ada `recipe`, isi controller dengan nilai-nilai yang ada
+    if (widget.recipe != null) {
+      _titleController.text = widget.recipe!.title;
+      _imageUrlController.text = widget.recipe!.imageUrl;
+      _ingredientsController.text = widget.recipe!.ingredients.join('. ');
+      _stepsController.text = widget.recipe!.steps.join('; ');
+    }
+  }
+
   Future<void> _submitRecipe() async {
     if (_formKey.currentState!.validate()) {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
-
-      // Membuat objek resep baru
-      final newRecipe = Recipe(
-        id: "", 
-        title: _titleController.text.trim(),
-        imageUrl: _imageUrlController.text.trim(),
-        ingredients: _ingredientsController.text
-            .trim()
-            .split(',') 
-            .map((e) => e.trim())
-            .toList(),
-        steps: _stepsController.text
-            .trim()
-            .split('.')
-            .map((e) => e.trim())
-            .where((step) => step.isNotEmpty)
-            .toList(),
-        favoritesCount: 0,
-        createdAt: DateTime.now(),
-        userId: authService.currentUser!.uid,
-      );
-
-      // Menambahkan resep baru ke Firestore
-      await recipeProvider.addRecipe(newRecipe);
-
-      // Navigasi kembali ke MyRecipesScreen
-      Navigator.pop(context);
+      // Logika untuk menambah atau mengupdate resep
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add Recipe")),
+      appBar: AppBar(
+        title: Text(widget.recipe == null ? "Add Recipe" : "Edit Recipe"),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -79,23 +64,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 ),
                 TextFormField(
                   controller: _ingredientsController,
-                  decoration: const InputDecoration(
-                      labelText: "Ingredients (comma-separated)"),
-                  validator: (value) => value == null || value.isEmpty
-                      ? "Please enter ingredients"
-                      : null,
+                  decoration: const InputDecoration(labelText: "Ingredients"),
                 ),
                 TextFormField(
                   controller: _stepsController,
-                  decoration: const InputDecoration(
-                      labelText: "Steps (separate by dots)"),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? "Please enter steps" : null,
+                  decoration: const InputDecoration(labelText: "Steps"),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _submitRecipe,
-                  child: const Text("Add Recipe"),
+                  child: const Text("Save"),
                 ),
               ],
             ),

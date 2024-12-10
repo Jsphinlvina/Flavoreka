@@ -24,6 +24,12 @@ class RecipeProvider extends ChangeNotifier {
     await fetchRecipes();
   }
 
+  // Update resep
+  Future<void> updateRecipe(Recipe updatedRecipe) async {
+    await _controller.updateRecipe(updatedRecipe.id, updatedRecipe.toMap());
+    await fetchRecipes(); // Refresh daftar resep
+  }
+
   // Hapus resep
   Future<void> deleteRecipe(String id) async {
     await _controller.deleteRecipe(id);

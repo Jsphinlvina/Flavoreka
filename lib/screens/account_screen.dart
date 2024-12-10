@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/navbar.dart';
 import 'home_screen.dart';
 
 class AccountScreen extends StatelessWidget {
@@ -64,6 +65,25 @@ class AccountScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: Navbar(
+        currentIndex: 0,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.pushReplacementNamed(context, '/home');
+              break;
+            case 1:
+              Navigator.pushReplacementNamed(context, '/my-recipes');
+              break;
+            case 2:
+              Navigator.pushReplacementNamed(context, '/favorites');
+              break;
+            case 3:
+              Navigator.pushReplacementNamed(context, '/account');
+              break;
+          }
+        },
       ),
     );
   }

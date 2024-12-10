@@ -4,6 +4,7 @@ import '../utils/auth_service.dart';
 import '../providers/recipe_provider.dart';
 import '../widgets/navbar.dart';
 import 'add_recipe_screen.dart';
+import 'recipe_detail_screen.dart';
 
 class MyRecipesScreen extends StatelessWidget {
   const MyRecipesScreen({super.key});
@@ -63,6 +64,15 @@ class MyRecipesScreen extends StatelessWidget {
                   ),
                   title: Text(recipe.title),
                   subtitle: Text("Favorites: ${recipe.favoritesCount}"),
+                  onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  RecipeDetailScreen(recipe: recipe),
+                            ),
+                          );
+                        },
                 );
               },
             ),
