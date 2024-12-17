@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/recipe_model.dart';
+import '../providers/recipe_provider.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   final Recipe? recipe; // Parameter opsional untuk mode edit
@@ -31,7 +33,25 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   Future<void> _submitRecipe() async {
     if (_formKey.currentState!.validate()) {
-      // Logika untuk menambah atau mengupdate resep
+      final recipeProvider =
+          Provider.of<RecipeProvider>(context, listen: false);
+
+      try {
+        await recipeProvider.addRecipe(
+          title: _titleController.text,
+          imageUrl: _imageUrlController.text,
+          ingredients: _ingredientsController.text,
+          steps: _stepsController.text,
+        );
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Recipe added successfully!")),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to add recipe: $e")),
+        );
+      }
     }
   }
 
@@ -52,8 +72,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(labelText: "Title"),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? "Please enter a title" : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? "Please enter a title"
+                      : null,
                 ),
                 TextFormField(
                   controller: _imageUrlController,

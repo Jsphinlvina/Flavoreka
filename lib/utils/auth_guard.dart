@@ -12,13 +12,10 @@ class AuthGuard extends StatelessWidget {
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
 
-    // Periksa apakah pengguna sudah login
     if (authService.currentUser == null) {
-      // Jika belum login, arahkan ke LoginScreen
       return const LoginScreen();
     }
 
-    // Jika sudah login, tampilkan halaman
     return child;
   }
 }

@@ -67,7 +67,7 @@ class AccountScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: Navbar(
-        currentIndex: 0,
+        currentIndex: 3,
         onTap: (index) {
           switch (index) {
             case 0:

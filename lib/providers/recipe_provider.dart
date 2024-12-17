@@ -1,33 +1,40 @@
 import 'package:flutter/material.dart';
 import '../controllers/recipe_controller.dart';
 import '../models/recipe_model.dart';
+import '../utils/auth_service.dart';
 
 class RecipeProvider extends ChangeNotifier {
-  final RecipeController _controller = RecipeController();
-  List<Recipe> _recipes = [];
+  final RecipeController _controller;
 
+  List<Recipe> _recipes = [];
   List<Recipe> get recipes => _recipes;
 
-  // Ambil semua resep
+  RecipeProvider(AuthService authService)
+      : _controller = RecipeController(authService);
+
+  Future<void> addRecipe({
+    required String title,
+    required String imageUrl,
+    required String ingredients,
+    required String steps,
+  }) async {
+    await _controller.addRecipe(
+      title: title,
+      imageUrl: imageUrl,
+      ingredients: ingredients,
+      steps: steps,
+    );
+    await fetchRecipes(); // Refresh daftar resep setelah menambahkan
+  }
+
   Future<void> fetchRecipes() async {
-    try {
-      _recipes = await _controller.getAllRecipes();
-      notifyListeners();
-    } catch (e) {
-      print("Error fetching recipes: $e");
-    }
+    _recipes = await _controller.getAllRecipes();
+    notifyListeners();
   }
-
-  // Tambah resep
-  Future<void> addRecipe(Recipe recipe) async {
-    await _controller.addRecipe(recipe);
-    await fetchRecipes();
-  }
-
   // Update resep
   Future<void> updateRecipe(Recipe updatedRecipe) async {
     await _controller.updateRecipe(updatedRecipe.id, updatedRecipe.toMap());
-    await fetchRecipes(); // Refresh daftar resep
+    await fetchRecipes(); 
   }
 
   // Hapus resep

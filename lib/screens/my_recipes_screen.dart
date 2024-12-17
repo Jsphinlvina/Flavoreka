@@ -77,7 +77,7 @@ class MyRecipesScreen extends StatelessWidget {
               },
             ),
       bottomNavigationBar: Navbar(
-        currentIndex: 0,
+        currentIndex: 1,
         onTap: (index) {
           switch (index) {
             case 0:
