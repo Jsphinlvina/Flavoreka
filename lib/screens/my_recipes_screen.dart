@@ -39,7 +39,8 @@ class MyRecipesScreen extends StatelessWidget {
               // Navigasi ke Add Recipe Screen
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const AddRecipeScreen()),
               ).then((_) {
                 // Refresh setelah kembali dari Add Recipe
                 recipeProvider.fetchRecipes();
@@ -49,7 +50,8 @@ class MyRecipesScreen extends StatelessWidget {
         ],
       ),
       body: userRecipes.isEmpty
-          ? const Center(child: Text("No recipes found. Add your first recipe!"))
+          ? const Center(
+              child: Text("No recipes found. Add your first recipe!"))
           : ListView.builder(
               itemCount: userRecipes.length,
               itemBuilder: (context, index) {
@@ -65,14 +67,14 @@ class MyRecipesScreen extends StatelessWidget {
                   title: Text(recipe.title),
                   subtitle: Text("Favorites: ${recipe.favoritesCount}"),
                   onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  RecipeDetailScreen(recipe: recipe),
-                            ),
-                          );
-                        },
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RecipeDetailScreen(recipe: recipe),
+                      ),
+                    );
+                  },
                 );
               },
             ),

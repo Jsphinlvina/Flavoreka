@@ -27,8 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final filteredRecipes = recipeProvider.recipes.where((recipe) {
       final query = _searchQuery.toLowerCase();
       return recipe.title.toLowerCase().contains(query) ||
-          recipe.ingredients.any((ingredient) =>
-              ingredient.toLowerCase().contains(query));
+          recipe.ingredients
+              .any((ingredient) => ingredient.toLowerCase().contains(query));
     }).toList();
 
     return Scaffold(

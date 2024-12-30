@@ -99,6 +99,19 @@ class RecipeDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text("Favorites: ${recipe.favoritesCount}"),
             Text("Created at: $formattedDate"),
+            FutureBuilder<String?>(
+              future: authService.getUsernameById(recipe.userId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Text("Made by: Loading...");
+                } else if (snapshot.hasError) {
+                  return const Text("Made by: Unknown");
+                } else {
+                  final username = snapshot.data ?? "Flavoreka";
+                  return Text("Made by: $username");
+                }
+              },
+            ),
             const SizedBox(height: 16),
             const Text(
               "Ingredients:",

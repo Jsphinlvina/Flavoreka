@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flavoreka/providers/user_data_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flavoreka/providers/recipe_provider.dart';
@@ -30,6 +31,7 @@ class MainApp extends StatelessWidget {
           update: (_, authService, previous) => RecipeProvider(authService),
         ),
         ChangeNotifierProvider(create: (_) => MyAuthProvider()),
+        ChangeNotifierProvider(create: (_) => UserDataProvider())
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

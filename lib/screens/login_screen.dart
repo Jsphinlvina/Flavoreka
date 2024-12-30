@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/auth_service.dart';
+import 'sign_up_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +14,21 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+
+    // Tampilkan pesan jika ada dari arguments
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final message = ModalRoute.of(context)?.settings.arguments as String?;
+      if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    });
+  }
+
   Future<void> _login() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     final email = _emailController.text.trim();
@@ -20,10 +36,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final user = await authService.login(email, password);
     if (user != null) {
-      // Login berhasil
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(
+          context, '/home');
     } else {
-      // Login gagal
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login failed. Please try again.")),
       );
@@ -60,6 +75,16 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
               onPressed: _login,
               child: const Text("Login"),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignUpScreen()),
+                );
+              },
+              child: const Text("Don't have an account? Sign Up"),
             ),
           ],
         ),

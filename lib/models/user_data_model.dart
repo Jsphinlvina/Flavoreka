@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserData {
   String id;
   String name;
@@ -19,31 +21,34 @@ class UserData {
     required this.email,
   });
 
-  // Konversi dari Firebase ke objek User Data
+  // Konversi dari Firestore ke objek User Data
   factory UserData.fromFiresotre(Map<String, dynamic> data, String id) {
     return UserData(
       id: id,
       name: data['name'] ?? '',
-      profilePicture: data['profilePicture'] ?? '',
-      favoriteRecipes: List<String>.from(data['favoriteRecipes'] ?? []),
-      createRecipes: data['createRecipes'] ?? 0,
-      createdAt:
-          DateTime.parse(data['createdAt'] ?? DateTime.now().toIso8601String()),
-      username: data['username'] ?? '',
       email: data['email'] ?? '',
+      username: data['username'] ?? '',
+      profilePicture: data['profilePicture'] ?? '',
+      favoriteRecipes: (data['favoriteRecipes'] is List)
+          ? List<String>.from(data['favoriteRecipes'])
+          : [], // Default ke list kosong jika bukan List
+      createRecipes: data['createRecipes'] ?? 0,
+      createdAt: (data['createAt'] is Timestamp)
+          ? (data['createAt'] as Timestamp).toDate() // Konversi Timestamp ke DateTime
+          : DateTime.parse(data['createAt'] ?? DateTime.now().toIso8601String()), // Fallback jika String
     );
   }
 
-  // Konversi dari User data ke Map untuk Firestore
+  // Konversi dari UserData ke Map untuk Firestore
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'profilePicture': profilePicture,
       'favoriteRecipes': favoriteRecipes,
       'createRecipes': createRecipes,
-      'createAt' : createdAt.toIso8601String(),
-      'username' : username,
-      'email' : email
+      'createAt': createdAt.toIso8601String(),
+      'username': username,
+      'email': email,
     };
   }
 }

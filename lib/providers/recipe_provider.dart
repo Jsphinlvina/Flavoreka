@@ -17,7 +17,7 @@ class RecipeProvider extends ChangeNotifier {
     required String imageUrl,
     required String ingredients,
     required String steps,
-  }) async {
+  }) async { 
     await _controller.addRecipe(
       title: title,
       imageUrl: imageUrl,

@@ -1,73 +1,189 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../providers/auth_provider.dart';
+import '../providers/user_data_provider.dart';
+import '../utils/auth_service.dart';
 import '../widgets/navbar.dart';
-import 'home_screen.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Mendapatkan instance AuthProvider
-    final authProvider = Provider.of<MyAuthProvider>(context);
-    final User? user = authProvider.currentUser;
+  _AccountScreenState createState() => _AccountScreenState();
+}
 
-    // Jika pengguna belum login, arahkan ke HomeScreen
-    if (user == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+class _AccountScreenState extends State<AccountScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserDataProvider>(context, listen: false).fetchUserData();
+    });
+  }
+
+  Future<void> _logout() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    await authService.logout();
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
+  Future<void> _deleteAccount(BuildContext context, String username) async {
+    final userProvider = Provider.of<UserDataProvider>(context, listen: false);
+    final authService = Provider.of<AuthService>(context, listen: false);
+
+    String inputUsername = "";
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Delete Account"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Are you sure you want to delete your account? This action is irreversible.",
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "To confirm, please type your username below:",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                onChanged: (value) {
+                  inputUsername = value;
+                },
+                decoration: const InputDecoration(
+                  labelText: "Username",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), // Menutup dialog
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context); // Tutup dialog sebelum operasi lain
+                if (inputUsername == username) {
+                  try {
+                    await userProvider.deleteCurrentUser();
+                    await authService.logout();
+
+                    // Navigasi ke login dengan pesan
+                    Navigator.pushReplacementNamed(
+                      context,
+                      '/login',
+                      arguments: "Account deleted successfully.",
+                    );
+                  } catch (e) {
+                    print("Error deleting account: $e");
+                    _showSnackbar(context, "Error: $e");
+                  }
+                } else {
+                  _showSnackbar(
+                      context, "Username doesn't match. Deletion cancelled.");
+                }
+              },
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+          ],
         );
-      });
-      return const SizedBox(); // Return widget kosong sementara navigasi berlangsung
-    }
+      },
+    );
+  }
+
+// Fungsi untuk menampilkan Snackbar
+  void _showSnackbar(BuildContext context, String message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserDataProvider>(context);
+    final userData = userProvider.currentUserData;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Account'),
-        centerTitle: true,
+        title: const Text("Account Information"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+            tooltip: 'Logout',
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            // Menampilkan email pengguna
-            Text(
-              'Email: ${user.email ?? 'Tidak ada email'}',
-              style: const TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 20),
-            // Menampilkan User ID
-            Text(
-              'User ID: ${user.uid}',
-              style: const TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 40),
-            // Tombol Logout
-            ElevatedButton(
-              onPressed: () async {
-                await authProvider.logout();
-                // Arahkan ke HomeScreen setelah logout
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  (Route<dynamic> route) => false,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
-              child: const Text('Logout'),
-            ),
-          ],
-        ),
-      ),
+      body: userProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : userData == null
+              ? const Center(child: Text("No user data found"))
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundColor: Colors.grey.shade300,
+                          backgroundImage: userData.profilePicture.isNotEmpty
+                              ? NetworkImage(userData.profilePicture)
+                                  as ImageProvider
+                              : null,
+                          child: userData.profilePicture.isEmpty
+                              ? const Icon(
+                                  Icons.account_circle,
+                                  size: 60,
+                                  color: Colors.grey,
+                                )
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text("Name: ${userData.name}",
+                          style: const TextStyle(fontSize: 18)),
+                      Text("Username: ${userData.username}",
+                          style: const TextStyle(fontSize: 18)),
+                      Text("Email: ${userData.email}",
+                          style: const TextStyle(fontSize: 18)),
+                      Text("Recipes Created: ${userData.createRecipes}",
+                          style: const TextStyle(fontSize: 18)),
+                      Text(
+                          "Favorite Recipes: ${userData.favoriteRecipes.length} recipes",
+                          style: const TextStyle(fontSize: 18)),
+                      Text(
+                          "Created At: ${userData.createdAt.toLocal().toString().split(' ')[0]}",
+                          style: const TextStyle(fontSize: 18)),
+                      const SizedBox(height: 30),
+                      Center(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          onPressed: () =>
+                              _deleteAccount(context, userData.username),
+                          child: const Text(
+                            "Delete Account",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
       bottomNavigationBar: Navbar(
-        currentIndex: 3,
+        currentIndex: 0,
         onTap: (index) {
           switch (index) {
             case 0:
