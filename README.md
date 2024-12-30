@@ -1,3 +1,3 @@
-# flavoreka
+# Flavoreka
 
-A new Flutter project.
+A new Flutter Recipe App project.
