@@ -49,34 +49,34 @@ class UserDataProvider extends ChangeNotifier {
   }
 
   // Membuat data user baru di Firestore
-  Future<void> createUserData({
-    required String name,
-    required String email,
-    required String username,
-  }) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
+  // Future<void> createUserData({
+  //   required String name,
+  //   required String email,
+  //   required String username,
+  // }) async {
+  //   final currentUser = FirebaseAuth.instance.currentUser;
 
-    if (currentUser == null) return;
+  //   if (currentUser == null) return;
 
-    final newUser = UserData(
-      id: currentUser.uid,
-      name: name,
-      email: email,
-      username: username,
-      profilePicture: "",
-      favoriteRecipes: [],
-      createRecipes: 0,
-      createdAt: DateTime.now(),
-    );
+  //   final newUser = UserData(
+  //     id: currentUser.uid,
+  //     name: name,
+  //     email: email,
+  //     username: username,
+  //     profilePicture: "",
+  //     favoriteRecipes: [],
+  //     createRecipes: 0,
+  //     createdAt: DateTime.now(),
+  //   );
 
-    try {
-      await _userCollection.doc(currentUser.uid).set(newUser.toMap());
-      _currentUserData = newUser;
-      notifyListeners();
-    } catch (e) {
-      print("Error creating user data: $e");
-    }
-  }
+  //   try {
+  //     await _userCollection.doc(currentUser.uid).set(newUser.toMap());
+  //     _currentUserData = newUser;
+  //     notifyListeners();
+  //   } catch (e) {
+  //     print("Error creating user data: $e");
+  //   }
+  // }
 
   // Update data user di Firestore
   Future<void> updateUserData(Map<String, dynamic> updatedData) async {
@@ -102,13 +102,13 @@ class UserDataProvider extends ChangeNotifier {
 
     if (currentUser != null) {
       try {
-        // Hapus data dari Firestore
+        // Hapus data pengguna dari Firestore
         await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
             .delete();
 
-        // Hapus akun Firebase Authentication
+        // Hapus akun dari Firebase Authentication
         await currentUser.delete();
         print("User account deleted successfully.");
       } on FirebaseAuthException catch (e) {

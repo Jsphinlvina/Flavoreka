@@ -68,21 +68,15 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(context); // Tutup dialog sebelum operasi lain
+                Navigator.pop(
+                    context); // Tutup dialog sebelum memulai operasi lainnya
                 if (inputUsername == username) {
                   try {
                     await userProvider.deleteCurrentUser();
                     await authService.logout();
-
-                    // Navigasi ke login dengan pesan
-                    Navigator.pushReplacementNamed(
-                      context,
-                      '/login',
-                      arguments: "Account deleted successfully.",
-                    );
+                    Navigator.pushReplacementNamed(context, '/login');
                   } catch (e) {
                     print("Error deleting account: $e");
-                    _showSnackbar(context, "Error: $e");
                   }
                 } else {
                   _showSnackbar(
@@ -101,6 +95,7 @@ class _AccountScreenState extends State<AccountScreen> {
   void _showSnackbar(BuildContext context, String message) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        // Pastikan widget masih aktif
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
         );
@@ -116,6 +111,7 @@ class _AccountScreenState extends State<AccountScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Account Information"),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -183,7 +179,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                 ),
       bottomNavigationBar: Navbar(
-        currentIndex: 0,
+        currentIndex: 3,
         onTap: (index) {
           switch (index) {
             case 0:

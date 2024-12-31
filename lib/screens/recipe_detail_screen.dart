@@ -4,12 +4,25 @@ import 'package:provider/provider.dart';
 import '../models/recipe_model.dart';
 import '../utils/auth_service.dart';
 import '../providers/recipe_provider.dart';
-import 'add_recipe_screen.dart';
+import 'edit_recipe_screen.dart';
 
-class RecipeDetailScreen extends StatelessWidget {
+class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
 
   const RecipeDetailScreen({required this.recipe, super.key});
+
+  @override
+  _RecipeDetailScreenState createState() => _RecipeDetailScreenState();
+}
+
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+  late Recipe recipe;
+
+  @override
+  void initState() {
+    super.initState();
+    recipe = widget.recipe;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +41,18 @@ class RecipeDetailScreen extends StatelessWidget {
           if (currentUserId == recipe.userId) ...[
             IconButton(
               icon: const Icon(Icons.edit),
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final updatedRecipe = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AddRecipeScreen(recipe: recipe),
+                    builder: (context) => EditRecipeScreen(recipe: recipe),
                   ),
                 );
+                if (updatedRecipe != null && mounted) {
+                  setState(() {
+                    recipe = updatedRecipe;
+                  });
+                }
               },
             ),
             IconButton(

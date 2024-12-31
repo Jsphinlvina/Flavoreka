@@ -17,7 +17,7 @@ class RecipeProvider extends ChangeNotifier {
     required String imageUrl,
     required String ingredients,
     required String steps,
-  }) async { 
+  }) async {
     await _controller.addRecipe(
       title: title,
       imageUrl: imageUrl,
@@ -31,10 +31,23 @@ class RecipeProvider extends ChangeNotifier {
     _recipes = await _controller.getAllRecipes();
     notifyListeners();
   }
+
   // Update resep
-  Future<void> updateRecipe(Recipe updatedRecipe) async {
-    await _controller.updateRecipe(updatedRecipe.id, updatedRecipe.toMap());
-    await fetchRecipes(); 
+  Future<void> updateRecipe({
+    required Recipe recipe,
+    required String title,
+    required String imageUrl,
+    required String ingredients,
+    required String steps,
+  }) async {
+    await _controller.updateRecipe(
+      recipe: recipe,
+      title: title,
+      imageUrl: imageUrl,
+      ingredients: ingredients,
+      steps: steps,
+    );
+    await fetchRecipes();
   }
 
   // Hapus resep

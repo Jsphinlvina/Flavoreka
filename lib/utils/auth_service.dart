@@ -25,11 +25,8 @@ class AuthService {
   // Sign up dengan email dan password
   Future<User?> signUp(String email, String password) async {
     try {
-      UserCredential userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
       return userCredential.user;
     } catch (e) {
       print("Sign Up error: $e");

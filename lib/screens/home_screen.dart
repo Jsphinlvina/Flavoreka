@@ -34,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Flavoreka"),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [

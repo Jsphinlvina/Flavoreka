@@ -6,8 +6,15 @@ import '../widgets/navbar.dart';
 import 'add_recipe_screen.dart';
 import 'recipe_detail_screen.dart';
 
-class MyRecipesScreen extends StatelessWidget {
+class MyRecipesScreen extends StatefulWidget {
   const MyRecipesScreen({super.key});
+
+  @override
+  _MyRecipesScreenState createState() => _MyRecipesScreenState();
+}
+
+class _MyRecipesScreenState extends State<MyRecipesScreen> {
+  String _searchQuery = "";
 
   @override
   Widget build(BuildContext context) {
@@ -24,14 +31,19 @@ class MyRecipesScreen extends StatelessWidget {
       );
     }
 
-    // Filter resep berdasarkan userId
+    // Filter resep berdasarkan userId dan pencarian
     final userRecipes = recipeProvider.recipes.where((recipe) {
-      return recipe.userId == authService.currentUser!.uid;
+      final query = _searchQuery.toLowerCase();
+      return recipe.userId == authService.currentUser!.uid &&
+          (recipe.title.toLowerCase().contains(query) ||
+              recipe.ingredients.any((ingredient) =>
+                  ingredient.toLowerCase().contains(query)));
     }).toList();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Recipes"),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -49,35 +61,60 @@ class MyRecipesScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: userRecipes.isEmpty
-          ? const Center(
-              child: Text("No recipes found. Add your first recipe!"))
-          : ListView.builder(
-              itemCount: userRecipes.length,
-              itemBuilder: (context, index) {
-                final recipe = userRecipes[index];
-                return ListTile(
-                  leading: Image.network(
-                    recipe.imageUrl,
-                    width: 50,
-                    height: 50,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.image_not_supported),
-                  ),
-                  title: Text(recipe.title),
-                  subtitle: Text("Favorites: ${recipe.favoritesCount}"),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            RecipeDetailScreen(recipe: recipe),
-                      ),
-                    );
-                  },
-                );
+      body: Column(
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: "Search your recipes...",
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
               },
             ),
+          ),
+          // Recipe list
+          Expanded(
+            child: userRecipes.isEmpty
+                ? const Center(
+                    child: Text("No recipes found. Add your first recipe!"))
+                : ListView.builder(
+                    itemCount: userRecipes.length,
+                    itemBuilder: (context, index) {
+                      final recipe = userRecipes[index];
+                      return ListTile(
+                        leading: Image.network(
+                          recipe.imageUrl,
+                          width: 50,
+                          height: 50,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.image_not_supported),
+                        ),
+                        title: Text(recipe.title),
+                        subtitle: Text("Favorites: ${recipe.favoritesCount}"),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  RecipeDetailScreen(recipe: recipe),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
       bottomNavigationBar: Navbar(
         currentIndex: 1,
         onTap: (index) {

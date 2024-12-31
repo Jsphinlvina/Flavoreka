@@ -16,7 +16,6 @@ class RecipeController {
     required String ingredients,
     required String steps,
   }) async {
-    
     // Ambil userId pengguna yang sedang login
     final currentUser = _authService.currentUser;
 
@@ -29,11 +28,7 @@ class RecipeController {
       id: "",
       title: title.trim(),
       imageUrl: imageUrl.trim(),
-      ingredients: ingredients
-          .trim()
-          .split('.')
-          .map((e) => e.trim())
-          .toList(),
+      ingredients: ingredients.trim().split('.').map((e) => e.trim()).toList(),
       steps: steps
           .trim()
           .split(';')
@@ -65,8 +60,27 @@ class RecipeController {
   }
 
   // Update resep
-  Future<void> updateRecipe(String id, Map<String, dynamic> data) async {
-    await _recipeCollection.doc(id).update(data);
+  // Function to update an existing recipe
+  Future<void> updateRecipe({
+    required Recipe recipe,
+    required String title,
+    required String imageUrl,
+    required String ingredients,
+    required String steps,
+  }) async {
+    final updatedRecipe = recipe.copyWith(
+      title: title.trim(),
+      imageUrl: imageUrl.trim(),
+      ingredients: ingredients.trim().split('.').map((e) => e.trim()).toList(),
+      steps: steps
+          .trim()
+          .split(';')
+          .map((e) => e.trim())
+          .where((step) => step.isNotEmpty)
+          .toList(),
+    );
+
+    await _recipeCollection.doc(updatedRecipe.id).update(updatedRecipe.toMap());
   }
 
   // Hapus resep

@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/recipe_provider.dart';
+import '../models/recipe_model.dart';
+import 'my_recipes_screen.dart';
 
-class AddRecipeScreen extends StatefulWidget {
-  const AddRecipeScreen({super.key});
+class EditRecipeScreen extends StatefulWidget {
+  final Recipe recipe;
+
+  const EditRecipeScreen({super.key, required this.recipe});
 
   @override
-  _AddRecipeScreenState createState() => _AddRecipeScreenState();
+  _EditRecipeScreenState createState() => _EditRecipeScreenState();
 }
 
-class _AddRecipeScreenState extends State<AddRecipeScreen> {
+class _EditRecipeScreenState extends State<EditRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _imageUrlController = TextEditingController();
   final TextEditingController _ingredientsController = TextEditingController();
   final TextEditingController _stepsController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeFields();
+  }
+
+  void _initializeFields() {
+    _titleController.text = widget.recipe.title;
+    _imageUrlController.text = widget.recipe.imageUrl;
+    _ingredientsController.text = widget.recipe.ingredients.join('. ');
+    _stepsController.text = widget.recipe.steps.join('; ');
+  }
 
   Future<void> _submitRecipe() async {
     if (_formKey.currentState!.validate()) {
@@ -22,19 +39,26 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           Provider.of<RecipeProvider>(context, listen: false);
 
       try {
-        await recipeProvider.addRecipe(
+        await recipeProvider.updateRecipe(
+          recipe: widget.recipe,
           title: _titleController.text,
           imageUrl: _imageUrlController.text,
           ingredients: _ingredientsController.text,
           steps: _stepsController.text,
         );
-        Navigator.pop(context);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MyRecipesScreen(),
+          ),
+          (route) => false,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Recipe added successfully!")),
+          const SnackBar(content: Text("Recipe updated successfully!")),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to add recipe: $e")),
+          SnackBar(content: Text("Failed to update recipe: $e")),
         );
       }
     }
@@ -44,7 +68,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add Recipe"),
+        title: const Text("Edit Recipe"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -79,7 +103,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _submitRecipe,
-                  child: const Text("Save"),
+                  child: const Text("Save Changes"),
                 ),
               ],
             ),
