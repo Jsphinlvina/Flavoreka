@@ -22,76 +22,79 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final recipeProvider = Provider.of<RecipeProvider>(context);
-
-    final filteredRecipes = recipeProvider.recipes.where((recipe) {
-      final query = _searchQuery.toLowerCase();
-      return recipe.title.toLowerCase().contains(query) ||
-          recipe.ingredients
-              .any((ingredient) => ingredient.toLowerCase().contains(query));
-    }).toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Flavoreka"),
         automaticallyImplyLeading: false,
       ),
-      body: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search recipes...",
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+      body: Consumer<RecipeProvider>(
+        builder: (context, recipeProvider, _) {
+          final filteredRecipes = recipeProvider.recipes.where((recipe) {
+            final query = _searchQuery.toLowerCase();
+            return recipe.title.toLowerCase().contains(query) ||
+                recipe.ingredients.any(
+                    (ingredient) => ingredient.toLowerCase().contains(query));
+          }).toList();
+
+          return Column(
+            children: [
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: "Search recipes...",
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                 ),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-          ),
-          // Recipe list
-          Expanded(
-            child: filteredRecipes.isEmpty
-                ? const Center(child: Text("No recipes found"))
-                : ListView.builder(
-                    itemCount: filteredRecipes.length,
-                    itemBuilder: (context, index) {
-                      final recipe = filteredRecipes[index];
-                      return ListTile(
-                        leading: Image.network(
-                          recipe.imageUrl,
-                          width: 50,
-                          height: 50,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.image_not_supported),
-                        ),
-                        title: Text(recipe.title),
-                        subtitle: Text("Favorites: ${recipe.favoritesCount}"),
-                        trailing: Text(recipe.createdAt
-                            .toLocal()
-                            .toString()
-                            .split(' ')[0]),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  RecipeDetailScreen(recipe: recipe),
+              // Recipe list
+              Expanded(
+                child: filteredRecipes.isEmpty
+                    ? const Center(child: Text("No recipes found"))
+                    : ListView.builder(
+                        itemCount: filteredRecipes.length,
+                        itemBuilder: (context, index) {
+                          final recipe = filteredRecipes[index];
+                          return ListTile(
+                            leading: Image.network(
+                              recipe.imageUrl,
+                              width: 50,
+                              height: 50,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.image_not_supported),
                             ),
+                            title: Text(recipe.title),
+                            subtitle:
+                                Text("Favorites: ${recipe.favoritesCount}"),
+                            trailing: Text(recipe.createdAt
+                                .toLocal()
+                                .toString()
+                                .split(' ')[0]),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      RecipeDetailScreen(recipe: recipe),
+                                ),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
-          ),
-        ],
+                      ),
+              ),
+            ],
+          );
+        },
       ),
       bottomNavigationBar: Navbar(
         currentIndex: 0,

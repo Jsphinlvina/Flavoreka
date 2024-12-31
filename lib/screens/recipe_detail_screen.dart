@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/recipe_model.dart';
 import '../utils/auth_service.dart';
 import '../providers/recipe_provider.dart';
+import '../providers/favorite_provider.dart';
 import 'edit_recipe_screen.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -29,10 +30,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     final authService = Provider.of<AuthService>(context, listen: false);
     final currentUserId = authService.currentUser?.uid;
     final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
+    final favoriteProvider = Provider.of<FavoriteProvider>(context);
 
     // Format tanggal untuk createdAt
     final String formattedDate =
         DateFormat('yyyy-MM-dd').format(recipe.createdAt);
+
+    final isFavorite = favoriteProvider.isFavorite(recipe.id);
 
     return Scaffold(
       appBar: AppBar(
@@ -146,6 +150,32 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               Text("${recipe.steps.indexOf(step) + 1}. $step",
                   style: const TextStyle(fontSize: 16)),
           ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ElevatedButton(
+          onPressed: () async {
+            if (isFavorite) {
+              await favoriteProvider.removeFavorite(recipe.id);
+            } else {
+              await favoriteProvider.addFavorite(recipe);
+            }
+
+            // Refresh data di HomeScreen dan FavoriteRecipesScreen
+            await Provider.of<RecipeProvider>(context, listen: false)
+                .fetchRecipes();
+            await Provider.of<FavoriteProvider>(context, listen: false)
+                .fetchFavorites();
+
+            setState(() {
+              recipe = recipe.copyWith(
+                  favoritesCount:
+                      recipe.favoritesCount + (isFavorite ? -1 : 1));
+            });
+          },
+          child:
+              Text(isFavorite ? "Remove from Favorites" : "Add to Favorites"),
         ),
       ),
     );
