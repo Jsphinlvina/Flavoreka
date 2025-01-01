@@ -8,10 +8,19 @@ class FavoriteController {
       FirebaseFirestore.instance.collection('recipes');
 
   Future<List<Recipe>> getFavorites(String userId) async {
+    if (userId.isEmpty) {
+      print("Error: User ID is empty.");
+      return [];
+    }
+
     final userDoc = await _userCollection.doc(userId).get();
+    if (!userDoc.exists) {
+      print("Error: User document does not exist.");
+      return [];
+    }
+
     final favoriteRecipeIds =
         List<String>.from(userDoc['favoriteRecipes'] ?? []);
-
     if (favoriteRecipeIds.isEmpty) {
       return [];
     }
@@ -26,10 +35,21 @@ class FavoriteController {
   }
 
   Future<void> addFavorite(String userId, Recipe recipe) async {
+    if (userId.isEmpty) {
+      throw Exception("User ID cannot be empty.");
+    }
+
     final userDoc = _userCollection.doc(userId);
     final recipeDoc = _recipeCollection.doc(recipe.id);
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final userSnapshot = await transaction.get(userDoc);
+      final recipeSnapshot = await transaction.get(recipeDoc);
+
+      if (!userSnapshot.exists || !recipeSnapshot.exists) {
+        throw Exception("User or recipe does not exist.");
+      }
+
       transaction.update(userDoc, {
         'favoriteRecipes': FieldValue.arrayUnion([recipe.id])
       });
@@ -41,10 +61,21 @@ class FavoriteController {
   }
 
   Future<void> removeFavorite(String userId, Recipe recipe) async {
+    if (userId.isEmpty) {
+      throw Exception("User ID cannot be empty.");
+    }
+
     final userDoc = _userCollection.doc(userId);
     final recipeDoc = _recipeCollection.doc(recipe.id);
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final userSnapshot = await transaction.get(userDoc);
+      final recipeSnapshot = await transaction.get(recipeDoc);
+
+      if (!userSnapshot.exists || !recipeSnapshot.exists) {
+        throw Exception("User or recipe does not exist.");
+      }
+
       transaction.update(userDoc, {
         'favoriteRecipes': FieldValue.arrayRemove([recipe.id])
       });

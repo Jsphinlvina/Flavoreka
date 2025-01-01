@@ -1,3 +1,5 @@
+import 'package:flavoreka/screens/edit_account_screen.dart';
+import 'package:flavoreka/screens/reset_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_data_provider.dart';
@@ -26,11 +28,14 @@ class _AccountScreenState extends State<AccountScreen> {
     Navigator.pushReplacementNamed(context, '/login');
   }
 
-  Future<void> _deleteAccount(BuildContext context, String username) async {
+  Future<void> _deleteAccount(BuildContext context) async {
     final userProvider = Provider.of<UserDataProvider>(context, listen: false);
     final authService = Provider.of<AuthService>(context, listen: false);
+    final username = userProvider.currentUserData?.username ?? "";
 
     String inputUsername = "";
+
+    final messenger = ScaffoldMessenger.of(context);
 
     await showDialog(
       context: context,
@@ -63,24 +68,29 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context), // Menutup dialog
+              onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(
-                    context); // Tutup dialog sebelum memulai operasi lainnya
+                Navigator.pop(context);
                 if (inputUsername == username) {
                   try {
                     await userProvider.deleteCurrentUser();
                     await authService.logout();
                     Navigator.pushReplacementNamed(context, '/login');
                   } catch (e) {
-                    print("Error deleting account: $e");
+                    messenger.showSnackBar(
+                      SnackBar(content: Text("Failed to delete account: $e")),
+                    );
                   }
                 } else {
-                  _showSnackbar(
-                      context, "Username doesn't match. Deletion cancelled.");
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text("Username doesn't match. Deletion cancelled."),
+                    ),
+                  );
                 }
               },
               child: const Text("Delete", style: TextStyle(color: Colors.red)),
@@ -89,18 +99,6 @@ class _AccountScreenState extends State<AccountScreen> {
         );
       },
     );
-  }
-
-// Fungsi untuk menampilkan Snackbar
-  void _showSnackbar(BuildContext context, String message) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        // Pastikan widget masih aktif
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
-      }
-    });
   }
 
   @override
@@ -162,18 +160,59 @@ class _AccountScreenState extends State<AccountScreen> {
                           "Created At: ${userData.createdAt.toLocal().toString().split(' ')[0]}",
                           style: const TextStyle(fontSize: 18)),
                       const SizedBox(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 50, // Atur tinggi tombol
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const EditUserScreen()),
+                                  );
+                                },
+                                child: const Text("Edit Profile"),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: SizedBox(
+                              height: 50,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ResetPasswordScreen()),
+                                  );
+                                },
+                                child: const Text('Reset Password'),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
                       Center(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                          child: SizedBox(
+                            height: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              onPressed: () => _deleteAccount(context),
+                              child: const Text(
+                                "Delete Account",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
                           ),
-                          onPressed: () =>
-                              _deleteAccount(context, userData.username),
-                          child: const Text(
-                            "Delete Account",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
                       ),
                     ],
                   ),
