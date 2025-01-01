@@ -18,7 +18,7 @@ class FavoriteProvider extends ChangeNotifier {
   Future<void> fetchFavorites() async {
     // Ambil daftar resep favorit dari database
     _favoriteRecipes = await _controller.getFavorites(userId);
-    notifyListeners(); // Memastikan komponen yang mendengarkan mendapatkan update
+    notifyListeners(); 
   }
 
   Future<void> addFavorite(Recipe recipe) async {
