@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/user_data_model.dart';
 
 class UserDataController {
@@ -56,13 +59,56 @@ class UserDataController {
     }
   }
 
-  // Edit user data
-  Future<void> editUserData(
-      String userId, Map<String, dynamic> updatedData) async {
+  // Fungsi untuk menyimpan gambar secara lokal
+  Future<String> saveImageLocally(File imageFile) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+    final localPath = '${directory.path}/$fileName.jpg';
+
+    final localImage = await imageFile.copy(localPath);
+    return localImage.path;
+  }
+
+  // Fungsi untuk memuat gambar dari path lokal
+  Future<File?> loadImage(String imagePath) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final localPath = '${directory.path}/${imagePath.split('/').last}';
+      final file = File(localPath);
+
+      if (await file.exists()) {
+        return file;
+      }
+    } catch (e) {
+      print("Error loading image: $e");
+    }
+    return null;
+  }
+
+  // Mengedit data pengguna (termasuk profilePicture)
+  Future<void> editUserData(String userId, Map<String, dynamic> updatedData,
+      {File? profilePicture}) async {
     if (userId.isEmpty) {
       throw Exception("User ID cannot be empty.");
     }
-    await _userCollection.doc(userId).update(updatedData);
+
+    if (profilePicture != null) {
+      try {
+        final localPath = await saveImageLocally(profilePicture);
+        updatedData['profilePicture'] =
+            localPath; // Tambahkan path gambar ke data yang diupdate
+      } catch (e) {
+        print("Error saving profile picture locally: $e");
+        throw Exception("Failed to save profile picture.");
+      }
+    }
+
+    try {
+      await _userCollection.doc(userId).update(updatedData);
+    } catch (e) {
+      print("Error updating user data: $e");
+      throw Exception("Failed to update user data.");
+    }
   }
 
   // Menghapus data user
@@ -73,14 +119,6 @@ class UserDataController {
 
     try {
       await _userCollection.doc(userId).delete();
-
-      final currentUser = _firebaseAuth.currentUser;
-      if (currentUser != null && currentUser.uid == userId) {
-        await currentUser.delete();
-        print("User deleted successfully from Firebase Authentication.");
-      } else {
-        print("No authenticated user matches the given userId.");
-      }
     } catch (e) {
       print("Error deleting user: $e");
       throw Exception("Failed to delete user. Please try again.");

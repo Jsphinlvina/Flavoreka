@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_data_model.dart';
@@ -12,26 +14,20 @@ class UserDataProvider extends ChangeNotifier {
   bool _isLoading = false; // State loading
   bool get isLoading => _isLoading;
 
-  // Mengambil data user yang sedang login
-  Future<void> fetchUserData() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null || currentUser.uid.isEmpty) {
-      print("No user is currently logged in or userId is empty.");
-      _currentUserData = null;
-      notifyListeners();
-      return;
-    }
+  Future<File?> loadProfilePicture() async {
+    if (_currentUserData == null) return null;
+    return await _controller.loadImage(_currentUserData!.profilePicture);
+  }
 
+  // Mengambil data user yang sedang login
+  Future<void> fetchUserData(String userId) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final userData = await _controller.getUserData(currentUser.uid);
+      final userData = await _controller.getUserData(userId);
       if (userData != null) {
         _currentUserData = userData;
-      } else {
-        print("No user data found for ID: ${currentUser.uid}");
-        _currentUserData = null;
       }
     } catch (e) {
       print("Error fetching user data: $e");
@@ -41,16 +37,23 @@ class UserDataProvider extends ChangeNotifier {
     }
   }
 
-   // Edit user data
-  Future<void> editUser(Map<String, dynamic> updatedData) async {
+  // Edit user data
+  Future<void> editUserData(Map<String, dynamic> updatedData,
+      {File? profilePicture}) async {
     if (_currentUserData == null) return;
 
     _isLoading = true;
     notifyListeners();
 
     try {
+      if (profilePicture != null) {
+        final localPath = await _controller.saveImageLocally(profilePicture);
+        updatedData['profilePicture'] =
+            localPath; // Tambahkan path gambar ke data yang diupdate
+      }
+
       await _controller.editUserData(_currentUserData!.id, updatedData);
-      await fetchUserData(); // Refresh data setelah update
+      await fetchUserData(_currentUserData!.id); // Refresh data setelah update
     } catch (e) {
       print("Error editing user data: $e");
     } finally {

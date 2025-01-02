@@ -1,10 +1,11 @@
-import 'package:flavoreka/screens/edit_account_screen.dart';
-import 'package:flavoreka/screens/reset_password_screen.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:provider/provider.dart';
 import '../providers/user_data_provider.dart';
 import '../utils/auth_service.dart';
 import '../widgets/navbar.dart';
+import 'edit_account_screen.dart';
+import 'reset_password_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -14,13 +15,16 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<UserDataProvider>(context, listen: false).fetchUserData();
-    });
-  }
+@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final userId = Provider.of<AuthService>(context, listen: false).currentUser?.uid;
+    if (userId != null) {
+      Provider.of<UserDataProvider>(context, listen: false).fetchUserData(userId);
+    }
+  });
+}
 
   Future<void> _logout() async {
     final authService = Provider.of<AuthService>(context, listen: false);
@@ -128,20 +132,30 @@ class _AccountScreenState extends State<AccountScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Center(
-                        child: CircleAvatar(
-                          radius: 60,
-                          backgroundColor: Colors.grey.shade300,
-                          backgroundImage: userData.profilePicture.isNotEmpty
-                              ? NetworkImage(userData.profilePicture)
-                                  as ImageProvider
-                              : null,
-                          child: userData.profilePicture.isEmpty
-                              ? const Icon(
+                        child: FutureBuilder<File?>(
+                          future: userProvider.loadProfilePicture(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            } else if (snapshot.hasError ||
+                                snapshot.data == null) {
+                              return CircleAvatar(
+                                radius: 60,
+                                backgroundColor: Colors.grey.shade300,
+                                child: const Icon(
                                   Icons.account_circle,
                                   size: 60,
                                   color: Colors.grey,
-                                )
-                              : null,
+                                ),
+                              );
+                            } else {
+                              return CircleAvatar(
+                                radius: 60,
+                                backgroundImage: FileImage(snapshot.data!),
+                              );
+                            }
+                          },
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -200,19 +214,19 @@ class _AccountScreenState extends State<AccountScreen> {
                       ),
                       const SizedBox(height: 10),
                       Center(
-                          child: SizedBox(
-                            height: 50,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                              ),
-                              onPressed: () => _deleteAccount(context),
-                              child: const Text(
-                                "Delete Account",
-                                style: TextStyle(color: Colors.white),
-                              ),
+                        child: SizedBox(
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            onPressed: () => _deleteAccount(context),
+                            child: const Text(
+                              "Delete Account",
+                              style: TextStyle(color: Colors.white),
                             ),
                           ),
+                        ),
                       ),
                     ],
                   ),

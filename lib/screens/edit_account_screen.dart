@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_data_provider.dart';
 
@@ -12,8 +14,7 @@ class EditUserScreen extends StatefulWidget {
 class _EditUserScreenState extends State<EditUserScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _profilePictureController =
-      TextEditingController();
+  File? _selectedImage;
 
   @override
   void initState() {
@@ -24,7 +25,17 @@ class _EditUserScreenState extends State<EditUserScreen> {
     if (userData != null) {
       _nameController.text = userData.name;
       _usernameController.text = userData.username;
-      _profilePictureController.text = userData.profilePicture;
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
     }
   }
 
@@ -33,11 +44,16 @@ class _EditUserScreenState extends State<EditUserScreen> {
     final updatedData = {
       'name': _nameController.text.trim(),
       'username': _usernameController.text.trim(),
-      'profilePicture': _profilePictureController.text.trim(),
     };
 
-    await userProvider.editUser(updatedData);
-    Navigator.pop(context); // Kembali ke layar sebelumnya
+    try {
+      await userProvider.editUserData(updatedData, profilePicture: _selectedImage);
+      Navigator.pop(context); // Kembali ke layar sebelumnya
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to save changes: $e")),
+      );
+    }
   }
 
   @override
@@ -50,6 +66,50 @@ class _EditUserScreenState extends State<EditUserScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            GestureDetector(
+              onTap: () async {
+                final source = await showModalBottomSheet<ImageSource>(
+                  context: context,
+                  builder: (context) {
+                    return SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.camera_alt),
+                            title: const Text("Take Photo"),
+                            onTap: () => Navigator.pop(context, ImageSource.camera),
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.photo),
+                            title: const Text("Choose from Gallery"),
+                            onTap: () => Navigator.pop(context, ImageSource.gallery),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+
+                if (source != null) {
+                  await _pickImage(source);
+                }
+              },
+              child: CircleAvatar(
+                radius: 60,
+                backgroundColor: Colors.grey.shade300,
+                backgroundImage:
+                    _selectedImage != null ? FileImage(_selectedImage!) : null,
+                child: _selectedImage == null
+                    ? const Icon(
+                        Icons.account_circle,
+                        size: 60,
+                        color: Colors.grey,
+                      )
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 20),
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: "Name"),
@@ -59,16 +119,10 @@ class _EditUserScreenState extends State<EditUserScreen> {
               controller: _usernameController,
               decoration: const InputDecoration(labelText: "Username"),
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _profilePictureController,
-              decoration:
-                  const InputDecoration(labelText: "Profile Picture URL"),
-            ),
             const SizedBox(height: 30),
             Center(
               child: SizedBox(
-                width: double.infinity, // Membuat tombol memenuhi lebar penuh
+                width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _saveChanges,
