@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:provider/provider.dart';
 import '../providers/recipe_provider.dart';
 import '../widgets/navbar.dart';
@@ -64,28 +65,34 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemCount: filteredRecipes.length,
                         itemBuilder: (context, index) {
                           final recipe = filteredRecipes[index];
-                          return ListTile(
-                            leading: Image.network(
-                              recipe.imageUrl,
-                              width: 50,
-                              height: 50,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.image_not_supported),
-                            ),
-                            title: Text(recipe.title),
-                            subtitle:
-                                Text("Favorites: ${recipe.favoritesCount}"),
-                            trailing: Text(recipe.createdAt
-                                .toLocal()
-                                .toString()
-                                .split(' ')[0]),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      RecipeDetailScreen(recipe: recipe),
-                                ),
+                          return FutureBuilder<File?>(
+                            future: Provider.of<RecipeProvider>(context, listen: false).loadImage(recipe.imageUrl),
+                            builder: (context, snapshot) {
+                              final localImage = snapshot.data;
+                              return ListTile(
+                                leading: localImage != null
+                                    ? Image.file(
+                                        localImage,
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Icon(Icons.image_not_supported),
+                                title: Text(recipe.title),
+                                subtitle: Text("Favorites: ${recipe.favoritesCount}"),
+                                trailing: Text(recipe.createdAt
+                                    .toLocal()
+                                    .toString()
+                                    .split(' ')[0]),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          RecipeDetailScreen(recipe: recipe),
+                                    ),
+                                  );
+                                },
                               );
                             },
                           );

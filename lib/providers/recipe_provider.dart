@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../controllers/recipe_controller.dart';
 import '../models/recipe_model.dart';
@@ -12,19 +13,24 @@ class RecipeProvider extends ChangeNotifier {
   RecipeProvider(AuthService authService)
       : _controller = RecipeController(authService);
 
+  // Memuat gambar dari path lokal melalui controller
+  Future<File?> loadImage(String imagePath) async {
+    return await _controller.loadImage(imagePath);
+  }
+
   Future<void> addRecipe({
     required String title,
-    required String imageUrl,
+    required File imageFile,
     required String ingredients,
     required String steps,
   }) async {
     await _controller.addRecipe(
       title: title,
-      imageUrl: imageUrl,
+      imageFile: imageFile,
       ingredients: ingredients,
       steps: steps,
     );
-    await fetchRecipes(); // Refresh daftar resep setelah menambahkan
+    await fetchRecipes();
   }
 
   Future<void> fetchRecipes() async {
@@ -36,14 +42,14 @@ class RecipeProvider extends ChangeNotifier {
   Future<void> updateRecipe({
     required Recipe recipe,
     required String title,
-    required String imageUrl,
+    File? imageFile, // Tambahkan parameter imageFile
     required String ingredients,
     required String steps,
   }) async {
     await _controller.updateRecipe(
       recipe: recipe,
       title: title,
-      imageUrl: imageUrl,
+      imageFile: imageFile,
       ingredients: ingredients,
       steps: steps,
     );

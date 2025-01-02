@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/recipe_model.dart';
@@ -18,18 +19,30 @@ class RecipeDetailScreen extends StatefulWidget {
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   late Recipe recipe;
+  File? _localImage;
 
   @override
   void initState() {
     super.initState();
     recipe = widget.recipe;
+    _loadImageFromProvider();
+  }
+
+  Future<void> _loadImageFromProvider() async {
+    final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
+    final localImage = await recipeProvider.loadImage(recipe.imageUrl);
+    if (localImage != null) {
+      setState(() {
+        _localImage = localImage;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
     final authService = Provider.of<AuthService>(context, listen: false);
     final currentUserId = authService.currentUser?.uid;
-    final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
     final favoriteProvider = Provider.of<FavoriteProvider>(context);
 
     // Format tanggal untuk createdAt
@@ -105,14 +118,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.network(
-              recipe.imageUrl,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.image_not_supported, size: 100),
-            ),
+            _localImage != null
+                ? Image.file(
+                    _localImage!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  )
+                : const Icon(Icons.image_not_supported, size: 100),
             const SizedBox(height: 16),
             Text(
               recipe.title,

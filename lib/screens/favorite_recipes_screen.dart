@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:provider/provider.dart';
 import '../utils/auth_service.dart';
 import '../providers/favorite_provider.dart';
+import '../providers/recipe_provider.dart';
 import '../widgets/navbar.dart';
 import 'recipe_detail_screen.dart';
 
@@ -32,7 +34,6 @@ class _FavoriteRecipesScreenState extends State<FavoriteRecipesScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    final favoriteProvider = Provider.of<FavoriteProvider>(context);
 
     // Periksa apakah pengguna sudah login
     if (authService.currentUser == null) {
@@ -44,73 +45,82 @@ class _FavoriteRecipesScreenState extends State<FavoriteRecipesScreen> {
       );
     }
 
-    final favoriteRecipes = favoriteProvider.favoriteRecipes.where((recipe) {
-      final query = _searchQuery.toLowerCase();
-      return recipe.title.toLowerCase().contains(query) ||
-          recipe.ingredients.any((ingredient) =>
-              ingredient.toLowerCase().contains(query));
-    }).toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Favorite Recipes"),
         automaticallyImplyLeading: false,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search favorite recipes...",
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+      body: Consumer2<FavoriteProvider, RecipeProvider>(
+        builder: (context, favoriteProvider, recipeProvider, _) {
+          final favoriteRecipes = favoriteProvider.favoriteRecipes.where((recipe) {
+            final query = _searchQuery.toLowerCase();
+            return recipe.title.toLowerCase().contains(query) ||
+                recipe.ingredients.any((ingredient) =>
+                    ingredient.toLowerCase().contains(query));
+          }).toList();
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: "Search favorite recipes...",
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                 ),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-          ),
-          Expanded(
-            child: favoriteRecipes.isEmpty
-                ? const Center(
-                    child: Text("No favorite recipes found."),
-                  )
-                : ListView.builder(
-                    itemCount: favoriteRecipes.length,
-                    itemBuilder: (context, index) {
-                      final recipe = favoriteRecipes[index];
-                      return ListTile(
-                        leading: Image.network(
-                          recipe.imageUrl,
-                          width: 50,
-                          height: 50,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.image_not_supported),
-                        ),
-                        title: Text(recipe.title),
-                        subtitle: Text("Favorites: ${recipe.favoritesCount}"),
-                        onTap: () async {
-                          // Navigate to RecipeDetailScreen and refresh on return
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  RecipeDetailScreen(recipe: recipe),
-                            ),
+              Expanded(
+                child: favoriteRecipes.isEmpty
+                    ? const Center(
+                        child: Text("No favorite recipes found."),
+                      )
+                    : ListView.builder(
+                        itemCount: favoriteRecipes.length,
+                        itemBuilder: (context, index) {
+                          final recipe = favoriteRecipes[index];
+                          return FutureBuilder<File?>(
+                            future: recipeProvider.loadImage(recipe.imageUrl),
+                            builder: (context, snapshot) {
+                              final localImage = snapshot.data;
+                              return ListTile(
+                                leading: localImage != null
+                                    ? Image.file(
+                                        localImage,
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Icon(Icons.image_not_supported),
+                                title: Text(recipe.title),
+                                subtitle: Text("Favorites: ${recipe.favoritesCount}"),
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          RecipeDetailScreen(recipe: recipe),
+                                    ),
+                                  );
+                                  favoriteProvider.fetchFavorites();
+                                },
+                              );
+                            },
                           );
-                          // Refresh favorites after returning
-                          favoriteProvider.fetchFavorites();
                         },
-                      );
-                    },
-                  ),
-          ),
-        ],
+                      ),
+              ),
+            ],
+          );
+        },
       ),
       bottomNavigationBar: Navbar(
         currentIndex: 2,

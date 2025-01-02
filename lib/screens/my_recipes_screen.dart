@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:provider/provider.dart';
 import '../utils/auth_service.dart';
 import '../providers/recipe_provider.dart';
@@ -19,7 +20,6 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    final recipeProvider = Provider.of<RecipeProvider>(context);
 
     // Periksa apakah pengguna sudah login
     if (authService.currentUser == null) {
@@ -31,15 +31,6 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
       );
     }
 
-    // Filter resep berdasarkan userId dan pencarian
-    final userRecipes = recipeProvider.recipes.where((recipe) {
-      final query = _searchQuery.toLowerCase();
-      return recipe.userId == authService.currentUser!.uid &&
-          (recipe.title.toLowerCase().contains(query) ||
-              recipe.ingredients.any((ingredient) =>
-                  ingredient.toLowerCase().contains(query)));
-    }).toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Recipes"),
@@ -48,72 +39,89 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // Navigasi ke Add Recipe Screen
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => const AddRecipeScreen()),
+                MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
               ).then((_) {
-                // Refresh setelah kembali dari Add Recipe
-                recipeProvider.fetchRecipes();
+                Provider.of<RecipeProvider>(context, listen: false).fetchRecipes();
               });
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search your recipes...",
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+      body: Consumer<RecipeProvider>(
+        builder: (context, recipeProvider, _) {
+          final userRecipes = recipeProvider.recipes.where((recipe) {
+            final query = _searchQuery.toLowerCase();
+            return recipe.userId == authService.currentUser!.uid &&
+                (recipe.title.toLowerCase().contains(query) ||
+                    recipe.ingredients.any((ingredient) =>
+                        ingredient.toLowerCase().contains(query)));
+          }).toList();
+
+          return Column(
+            children: [
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: "Search your recipes...",
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                 ),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-          ),
-          // Recipe list
-          Expanded(
-            child: userRecipes.isEmpty
-                ? const Center(
-                    child: Text("No recipes found. Add your first recipe!"))
-                : ListView.builder(
-                    itemCount: userRecipes.length,
-                    itemBuilder: (context, index) {
-                      final recipe = userRecipes[index];
-                      return ListTile(
-                        leading: Image.network(
-                          recipe.imageUrl,
-                          width: 50,
-                          height: 50,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.image_not_supported),
-                        ),
-                        title: Text(recipe.title),
-                        subtitle: Text("Favorites: ${recipe.favoritesCount}"),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  RecipeDetailScreen(recipe: recipe),
-                            ),
+              // Recipe list
+              Expanded(
+                child: userRecipes.isEmpty
+                    ? const Center(
+                        child: Text("No recipes found. Add your first recipe!"),
+                      )
+                    : ListView.builder(
+                        itemCount: userRecipes.length,
+                        itemBuilder: (context, index) {
+                          final recipe = userRecipes[index];
+                          return FutureBuilder<File?>(
+                            future: Provider.of<RecipeProvider>(context, listen: false).loadImage(recipe.imageUrl),
+                            builder: (context, snapshot) {
+                              final localImage = snapshot.data;
+                              return ListTile(
+                                leading: localImage != null
+                                    ? Image.file(
+                                        localImage,
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Icon(Icons.image_not_supported),
+                                title: Text(recipe.title),
+                                subtitle: Text("Favorites: ${recipe.favoritesCount}"),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          RecipeDetailScreen(recipe: recipe),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
-          ),
-        ],
+                      ),
+              ),
+            ],
+          );
+        },
       ),
       bottomNavigationBar: Navbar(
         currentIndex: 1,

@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/recipe_model.dart';
 import '../utils/auth_service.dart';
 
@@ -9,25 +11,35 @@ class RecipeController {
 
   RecipeController(this._authService);
 
-  // Fungsi untuk menambahkan resep baru
+  // Simpan gambar ke direktori lokal aplikasi
+  Future<String> _saveImageLocally(File imageFile) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+    final localPath = '${directory.path}/$fileName.jpg';
+
+    final localImage = await imageFile.copy(localPath);
+    return localImage.path;
+  }
+
+  // Tambahkan resep baru dengan gambar lokal
   Future<void> addRecipe({
     required String title,
-    required String imageUrl,
+    required File imageFile,
     required String ingredients,
     required String steps,
   }) async {
-    // Ambil userId pengguna yang sedang login
     final currentUser = _authService.currentUser;
 
     if (currentUser == null) {
       throw Exception("You must be logged in to add a recipe.");
     }
 
-    // Buat objek Recipe
+    String localImagePath = await _saveImageLocally(imageFile);
+
     final newRecipe = Recipe(
       id: "",
       title: title.trim(),
-      imageUrl: imageUrl.trim(),
+      imageUrl: localImagePath, // Simpan path lokal
       ingredients: ingredients.trim().split('.').map((e) => e.trim()).toList(),
       steps: steps
           .trim()
@@ -40,8 +52,23 @@ class RecipeController {
       favoritesCount: 0,
     );
 
-    // Simpan ke Firestore
     await _recipeCollection.add(newRecipe.toMap());
+  }
+
+  // Fungsi untuk memuat gambar dari path lokal
+  Future<File?> loadImage(String imagePath) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final localPath = '${directory.path}/${imagePath.split('/').last}';
+      final file = File(localPath);
+
+      if (await file.exists()) {
+        return file;
+      }
+    } catch (e) {
+      print("Error loading image: $e");
+    }
+    return null;
   }
 
   // Ambil semua resep
@@ -59,18 +86,24 @@ class RecipeController {
     return Recipe.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
   }
 
-  // Update resep
-  // Function to update an existing recipe
+  // Update resep dengan gambar lokal
   Future<void> updateRecipe({
     required Recipe recipe,
     required String title,
-    required String imageUrl,
+    File? imageFile,
     required String ingredients,
     required String steps,
   }) async {
+    String imageUrl = recipe.imageUrl;
+
+    if (imageFile != null) {
+      imageUrl =
+          await _saveImageLocally(imageFile); // Simpan gambar baru secara lokal
+    }
+
     final updatedRecipe = recipe.copyWith(
       title: title.trim(),
-      imageUrl: imageUrl.trim(),
+      imageUrl: imageUrl,
       ingredients: ingredients.trim().split('.').map((e) => e.trim()).toList(),
       steps: steps
           .trim()

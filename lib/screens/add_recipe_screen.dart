@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/recipe_provider.dart';
 
@@ -12,19 +14,37 @@ class AddRecipeScreen extends StatefulWidget {
 class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _imageUrlController = TextEditingController();
   final TextEditingController _ingredientsController = TextEditingController();
   final TextEditingController _stepsController = TextEditingController();
+  File? _selectedImage;
+
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
 
   Future<void> _submitRecipe() async {
     if (_formKey.currentState!.validate()) {
       final recipeProvider =
           Provider.of<RecipeProvider>(context, listen: false);
 
+      if (_selectedImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select an image")),
+        );
+        return;
+      }
+
       try {
         await recipeProvider.addRecipe(
           title: _titleController.text,
-          imageUrl: _imageUrlController.text,
+          imageFile: _selectedImage!, // Pass the selected image
           ingredients: _ingredientsController.text,
           steps: _stepsController.text,
         );
@@ -61,13 +81,49 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       ? "Please enter a title"
                       : null,
                 ),
-                TextFormField(
-                  controller: _imageUrlController,
-                  decoration: const InputDecoration(labelText: "Image URL"),
-                  validator: (value) => value == null || value.isEmpty
-                      ? "Please enter an image URL"
-                      : null,
+                const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () async {
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (_) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.photo),
+                            title: const Text("Choose from Gallery"),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImage(ImageSource.gallery);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.camera_alt),
+                            title: const Text("Take a Picture"),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImage(ImageSource.camera);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: _selectedImage == null
+                      ? Container(
+                          height: 200,
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Text("Tap to select an image"),
+                          ),
+                        )
+                      : Image.file(
+                          _selectedImage!,
+                          height: 200,
+                          fit: BoxFit.cover,
+                        ),
                 ),
+                const SizedBox(height: 10),
                 TextFormField(
                   controller: _ingredientsController,
                   decoration: const InputDecoration(labelText: "Ingredients"),
@@ -79,7 +135,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _submitRecipe,
-                  child: const Text("Save"),
+                  child: const Text("Add"),
                 ),
               ],
             ),
