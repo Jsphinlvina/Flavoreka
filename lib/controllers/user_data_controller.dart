@@ -156,4 +156,19 @@ class UserDataController {
       throw Exception("Failed to update password: ${e.toString()}");
     }
   }
+
+  Future<bool> isUsernameUnique(String username) async {
+    final querySnapshot =
+        await _userCollection.where('username', isEqualTo: username).get();
+
+    return querySnapshot.docs.isEmpty;
+  }
+
+  // Validasi apakah email unik
+  Future<bool> isEmailUnique(String email) async {
+    final querySnapshot =
+        await _userCollection.where('email', isEqualTo: email).get();
+
+    return querySnapshot.docs.isEmpty; // Jika kosong, email unik
+  }
 }

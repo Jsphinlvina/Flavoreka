@@ -15,6 +15,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   File? _selectedImage;
+  String? _usernameError;
 
   @override
   void initState() {
@@ -41,9 +42,20 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
   Future<void> _saveChanges() async {
     final userProvider = Provider.of<UserDataProvider>(context, listen: false);
+    final username = _usernameController.text.trim();
+
+    // Validasi username unik
+    final isUnique = await userProvider.checkUsernameUniqueness(username);
+    if (!isUnique) {
+      setState(() {
+        _usernameError = "Username is already taken. Please choose another one.";
+      });
+      return;
+    }
+
     final updatedData = {
       'name': _nameController.text.trim(),
-      'username': _usernameController.text.trim(),
+      'username': username,
     };
 
     try {
@@ -98,8 +110,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
               child: CircleAvatar(
                 radius: 60,
                 backgroundColor: Colors.grey.shade300,
-                backgroundImage:
-                    _selectedImage != null ? FileImage(_selectedImage!) : null,
+                backgroundImage: _selectedImage != null ? FileImage(_selectedImage!) : null,
                 child: _selectedImage == null
                     ? const Icon(
                         Icons.account_circle,
@@ -117,7 +128,15 @@ class _EditUserScreenState extends State<EditUserScreen> {
             const SizedBox(height: 10),
             TextField(
               controller: _usernameController,
-              decoration: const InputDecoration(labelText: "Username"),
+              decoration: InputDecoration(
+                labelText: "Username",
+                errorText: _usernameError,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _usernameError = null; // Reset error saat user mengetik
+                });
+              },
             ),
             const SizedBox(height: 30),
             Center(

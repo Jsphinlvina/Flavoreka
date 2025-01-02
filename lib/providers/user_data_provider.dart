@@ -37,6 +37,26 @@ class UserDataProvider extends ChangeNotifier {
     }
   }
 
+  // Membuat data user baru
+  Future<void> createUserData({
+    required String id,
+    required String name,
+    required String email,
+    required String username,
+  }) async {
+    try {
+      await _controller.createUserData(
+        id: id,
+        name: name,
+        email: email,
+        username: username,
+      );
+    } catch (e) {
+      print("Error creating user data: $e");
+      throw Exception("Failed to create user data.");
+    }
+  }
+
   // Edit user data
   Future<void> editUserData(Map<String, dynamic> updatedData,
       {File? profilePicture}) async {
@@ -94,5 +114,15 @@ class UserDataProvider extends ChangeNotifier {
   Future<void> updatePassword(String newPassword) async {
     await _controller.updatePassword(newPassword);
     notifyListeners();
+  }
+
+  // Validasi username unik
+  Future<bool> checkUsernameUniqueness(String username) async {
+    return await _controller.isUsernameUnique(username);
+  }
+
+  // Validasi email unik
+  Future<bool> checkEmailUniqueness(String email) async {
+    return await _controller.isEmailUnique(email);
   }
 }
