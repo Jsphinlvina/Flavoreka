@@ -36,15 +36,20 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProxyProvider<AuthService, FavoriteProvider>(
           create: (context) => FavoriteProvider(
             FavoriteController(),
-            Provider.of<AuthService>(context, listen: false).currentUser?.uid ?? '',
+            Provider.of<AuthService>(context, listen: false).currentUser?.uid ??
+                '',
           ),
-          update: (_, authService, previous) => FavoriteProvider(
+          update: (context, authService, previous) => FavoriteProvider(
             FavoriteController(),
             authService.currentUser?.uid ?? '',
           ),
         ),
+        ChangeNotifierProxyProvider<AuthService, UserDataProvider>(
+          create: (context) => UserDataProvider(
+              Provider.of<AuthService>(context, listen: false)),
+          update: (_, authService, previous) => UserDataProvider(authService),
+        ),
         ChangeNotifierProvider(create: (_) => MyAuthProvider()),
-        ChangeNotifierProvider(create: (_) => UserDataProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

@@ -1,14 +1,23 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flavoreka/controllers/favorite_controller.dart';
+import 'package:flavoreka/controllers/recipe_controller.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/user_data_model.dart';
+import '../utils/auth_service.dart';
 
 class UserDataController {
   final CollectionReference _userCollection =
       FirebaseFirestore.instance.collection('users');
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final AuthService _authService;
+
+  final RecipeController _recipeController;
+  final FavoriteController _favoriteController = FavoriteController();
+
+  UserDataController(AuthService authService)
+      : _authService = authService,
+        _recipeController = RecipeController(authService);
 
   // Membuat data user baru
   Future<void> createUserData({
@@ -111,14 +120,44 @@ class UserDataController {
     }
   }
 
-  // Menghapus data user
-  Future<void> deleteUser(String userId) async {
+  Future<void> deleteUser(String userId, String password) async {
     if (userId.isEmpty) {
       throw Exception("User ID cannot be empty.");
     }
 
     try {
+      final user = _authService.currentUser;
+      if (user == null || user.uid != userId) {
+        throw Exception(
+            "User not authenticated or does not match the provided userId.");
+      }
+
+      // Otentikasi ulang pengguna
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Menghapus semua resep yang dibuat oleh pengguna
+      final allRecipes = await _recipeController.getAllRecipes();
+      for (var recipe in allRecipes) {
+        if (recipe.userId == userId) {
+          await _recipeController.deleteRecipe(recipe.id);
+        }
+      }
+
+      for (var recipe in allRecipes) {
+        await _favoriteController.removeFavoritesByRecipe(recipe.id);
+      }
+
       await _userCollection.doc(userId).delete();
+
+      // Hapus akun pengguna dari Firebase Authentication
+      await user.delete();
+
+      print("User account deleted successfully.");
     } catch (e) {
       print("Error deleting user: $e");
       throw Exception("Failed to delete user. Please try again.");
@@ -126,7 +165,7 @@ class UserDataController {
   }
 
   Future<bool> validateCurrentPassword(String currentPassword) async {
-    final user = _firebaseAuth.currentUser;
+    final user = _authService.currentUser;
     if (user == null) {
       throw Exception("No user is logged in.");
     }
@@ -140,12 +179,13 @@ class UserDataController {
       await user.reauthenticateWithCredential(credential);
       return true;
     } catch (e) {
+      print("Error reauthenticating: $e");
       return false;
     }
   }
 
   Future<void> updatePassword(String newPassword) async {
-    final user = _firebaseAuth.currentUser;
+    final user = _authService.currentUser;
     if (user == null) {
       throw Exception("No user is logged in.");
     }
@@ -153,6 +193,7 @@ class UserDataController {
     try {
       await user.updatePassword(newPassword);
     } catch (e) {
+      print("Error updating password: $e");
       throw Exception("Failed to update password: ${e.toString()}");
     }
   }

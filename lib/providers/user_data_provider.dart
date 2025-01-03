@@ -1,12 +1,15 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_data_model.dart';
 import '../controllers/user_data_controller.dart';
+import '../utils/auth_service.dart';
 
 class UserDataProvider extends ChangeNotifier {
-  final UserDataController _controller = UserDataController();
+  final UserDataController _controller;
+
+  UserDataProvider(AuthService authService)
+      : _controller = UserDataController(authService);
 
   UserData? _currentUserData; // Data pengguna yang sedang login
   UserData? get currentUserData => _currentUserData;
@@ -66,13 +69,11 @@ class UserDataProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (profilePicture != null) {
-        final localPath = await _controller.saveImageLocally(profilePicture);
-        updatedData['profilePicture'] =
-            localPath; // Tambahkan path gambar ke data yang diupdate
-      }
-
-      await _controller.editUserData(_currentUserData!.id, updatedData);
+      await _controller.editUserData(
+        _currentUserData!.id,
+        updatedData,
+        profilePicture: profilePicture,
+      );
       await fetchUserData(_currentUserData!.id); // Refresh data setelah update
     } catch (e) {
       print("Error editing user data: $e");
@@ -83,7 +84,7 @@ class UserDataProvider extends ChangeNotifier {
   }
 
   // Menghapus akun user yang sedang login
-  Future<void> deleteCurrentUser() async {
+  Future<void> deleteCurrentUser(String password) async {
     final currentUser = FirebaseAuth.instance.currentUser;
 
     if (currentUser == null) {
@@ -94,8 +95,7 @@ class UserDataProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _controller.deleteUser(currentUser.uid);
-
+      await _controller.deleteUser(currentUser.uid, password); // Kirim password
       print("User account deleted successfully.");
       _currentUserData = null;
     } catch (e) {

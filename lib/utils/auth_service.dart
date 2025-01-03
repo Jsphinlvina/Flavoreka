@@ -15,6 +15,8 @@ class AuthService {
         email: email,
         password: password,
       );
+
+      // Pastikan userCredential.user tidak null
       return userCredential.user;
     } catch (e) {
       print("Login error: $e");

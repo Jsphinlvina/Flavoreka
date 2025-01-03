@@ -7,6 +7,7 @@ import '../utils/auth_service.dart';
 import '../providers/recipe_provider.dart';
 import '../providers/favorite_provider.dart';
 import 'edit_recipe_screen.dart';
+import 'login_screen.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -169,6 +170,28 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         padding: const EdgeInsets.all(8.0),
         child: ElevatedButton(
           onPressed: () async {
+            if (currentUserId == null) {
+              // Jika pengguna belum login, arahkan ke halaman login
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+
+              // Periksa apakah pengguna telah login setelah kembali dari halaman login
+              final newUserId = Provider.of<AuthService>(context, listen: false)
+                  .currentUser
+                  ?.uid;
+              if (newUserId != null) {
+                // Perbarui userId di FavoriteProvider
+                Provider.of<FavoriteProvider>(context, listen: false)
+                    .updateUserId(newUserId);
+              } else {
+                // Jika pengguna tetap tidak login, keluar dari fungsi
+                return;
+              }
+            }
+
+            // Setelah login atau jika sudah login sebelumnya
             if (isFavorite) {
               await favoriteProvider.removeFavorite(recipe.id);
             } else {
@@ -183,8 +206,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
             setState(() {
               recipe = recipe.copyWith(
-                  favoritesCount:
-                      recipe.favoritesCount + (isFavorite ? -1 : 1));
+                favoritesCount: recipe.favoritesCount + (isFavorite ? -1 : 1),
+              );
             });
           },
           child:

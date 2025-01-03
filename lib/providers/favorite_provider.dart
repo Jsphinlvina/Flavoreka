@@ -4,10 +4,10 @@ import '../models/recipe_model.dart';
 
 class FavoriteProvider extends ChangeNotifier {
   final FavoriteController _controller;
-  final String userId;
+  String _userId;
   List<Recipe> _favoriteRecipes = [];
 
-  FavoriteProvider(this._controller, this.userId);
+  FavoriteProvider(this._controller, this._userId);
 
   List<Recipe> get favoriteRecipes => _favoriteRecipes;
 
@@ -15,21 +15,25 @@ class FavoriteProvider extends ChangeNotifier {
     return _favoriteRecipes.any((recipe) => recipe.id == recipeId);
   }
 
+  void updateUserId(String newUserId) {
+    _userId = newUserId;
+    notifyListeners();
+  }
+
   Future<void> fetchFavorites() async {
-    // Ambil daftar resep favorit dari database
-    _favoriteRecipes = await _controller.getFavorites(userId);
-    notifyListeners(); 
+    _favoriteRecipes = await _controller.getFavorites(_userId);
+    notifyListeners();
   }
 
   Future<void> addFavorite(Recipe recipe) async {
-    await _controller.addFavorite(userId, recipe);
+    await _controller.addFavorite(_userId, recipe);
     _favoriteRecipes.add(recipe);
     notifyListeners();
   }
 
   Future<void> removeFavorite(String recipeId) async {
     final recipe = _favoriteRecipes.firstWhere((r) => r.id == recipeId);
-    await _controller.removeFavorite(userId, recipe);
+    await _controller.removeFavorite(_userId, recipe);
     _favoriteRecipes.remove(recipe);
     notifyListeners();
   }

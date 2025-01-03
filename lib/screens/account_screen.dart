@@ -15,21 +15,25 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-@override
-void initState() {
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final userId = Provider.of<AuthService>(context, listen: false).currentUser?.uid;
-    if (userId != null) {
-      Provider.of<UserDataProvider>(context, listen: false).fetchUserData(userId);
-    }
-  });
-}
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId =
+          Provider.of<AuthService>(context, listen: false).currentUser?.uid;
+      if (userId != null) {
+        Provider.of<UserDataProvider>(context, listen: false)
+            .fetchUserData(userId);
+      }
+    });
+  }
 
   Future<void> _logout() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     await authService.logout();
-    Navigator.pushReplacementNamed(context, '/login');
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
   Future<void> _deleteAccount(BuildContext context) async {
@@ -38,10 +42,11 @@ void initState() {
     final username = userProvider.currentUserData?.username ?? "";
 
     String inputUsername = "";
+    String inputPassword = ""; // Tambahkan input password
 
     final messenger = ScaffoldMessenger.of(context);
 
-    await showDialog(
+    final result = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -55,7 +60,7 @@ void initState() {
               ),
               const SizedBox(height: 10),
               const Text(
-                "To confirm, please type your username below:",
+                "To confirm, please type your username and password below:",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
@@ -68,41 +73,53 @@ void initState() {
                   border: OutlineInputBorder(),
                 ),
               ),
+              const SizedBox(height: 10),
+              TextField(
+                onChanged: (value) {
+                  inputPassword = value;
+                },
+                decoration: const InputDecoration(
+                  labelText: "Password",
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true, // Sembunyikan password
+              ),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(context, false),
               child: const Text("Cancel"),
             ),
             TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                if (inputUsername == username) {
-                  try {
-                    await userProvider.deleteCurrentUser();
-                    await authService.logout();
-                    Navigator.pushReplacementNamed(context, '/login');
-                  } catch (e) {
-                    messenger.showSnackBar(
-                      SnackBar(content: Text("Failed to delete account: $e")),
-                    );
-                  }
-                } else {
-                  messenger.showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text("Username doesn't match. Deletion cancelled."),
-                    ),
-                  );
-                }
-              },
+              onPressed: () => Navigator.pop(context, true),
               child: const Text("Delete", style: TextStyle(color: Colors.red)),
             ),
           ],
         );
       },
     );
+
+    if (result == true && inputUsername == username) {
+      try {
+        await userProvider.deleteCurrentUser(inputPassword); // Kirim password
+        await authService.logout();
+
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
+      } catch (e) {
+        messenger.showSnackBar(
+          SnackBar(content: Text("Failed to delete account: $e")),
+        );
+      }
+    } else if (result == true) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text("Username doesn't match. Deletion cancelled."),
+        ),
+      );
+    }
   }
 
   @override
@@ -179,7 +196,7 @@ void initState() {
                         children: [
                           Expanded(
                             child: SizedBox(
-                              height: 50, // Atur tinggi tombol
+                              height: 50,
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(

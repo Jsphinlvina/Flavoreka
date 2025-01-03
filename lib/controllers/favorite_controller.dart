@@ -85,4 +85,20 @@ class FavoriteController {
       });
     });
   }
+
+  Future<void> removeFavoritesByRecipe(String recipeId) async {
+    if (recipeId.isEmpty) {
+      throw Exception("Recipe ID cannot be empty.");
+    }
+
+    final usersWithFavorites = await _userCollection
+        .where('favoriteRecipes', arrayContains: recipeId)
+        .get();
+
+    for (var userDoc in usersWithFavorites.docs) {
+      await _userCollection.doc(userDoc.id).update({
+        'favoriteRecipes': FieldValue.arrayRemove([recipeId])
+      });
+    }
+  }
 }
