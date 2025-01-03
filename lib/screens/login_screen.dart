@@ -1,3 +1,4 @@
+import 'package:flavoreka/providers/favorite_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/auth_service.dart';
@@ -34,13 +35,23 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    final user = await authService.login(email, password);
-    if (user != null) {
-      Navigator.pushReplacementNamed(
-          context, '/home');
-    } else {
+    try {
+      final user = await authService.login(email, password);
+
+      if (user != null) {
+        // Update userId di FavoriteProvider setelah login berhasil
+        Provider.of<FavoriteProvider>(context, listen: false).userId = user.uid;
+
+        // Navigasi ke halaman utama
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login failed. Please try again.")),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login failed. Please try again.")),
+        SnackBar(content: Text("Error during login: $e")),
       );
     }
   }

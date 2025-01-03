@@ -171,34 +171,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         child: ElevatedButton(
           onPressed: () async {
             if (currentUserId == null) {
-              // Jika pengguna belum login, arahkan ke halaman login
-              await Navigator.push(
+              // Arahkan pengguna ke halaman login
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
               );
-
-              // Periksa apakah pengguna telah login setelah kembali dari halaman login
-              final newUserId = Provider.of<AuthService>(context, listen: false)
-                  .currentUser
-                  ?.uid;
-              if (newUserId != null) {
-                // Perbarui userId di FavoriteProvider
-                Provider.of<FavoriteProvider>(context, listen: false)
-                    .updateUserId(newUserId);
-              } else {
-                // Jika pengguna tetap tidak login, keluar dari fungsi
-                return;
-              }
+              return;
             }
 
-            // Setelah login atau jika sudah login sebelumnya
             if (isFavorite) {
               await favoriteProvider.removeFavorite(recipe.id);
             } else {
               await favoriteProvider.addFavorite(recipe);
             }
 
-            // Refresh data di HomeScreen dan FavoriteRecipesScreen
+            // Refresh data
             await Provider.of<RecipeProvider>(context, listen: false)
                 .fetchRecipes();
             await Provider.of<FavoriteProvider>(context, listen: false)
@@ -206,8 +193,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
             setState(() {
               recipe = recipe.copyWith(
-                favoritesCount: recipe.favoritesCount + (isFavorite ? -1 : 1),
-              );
+                  favoritesCount:
+                      recipe.favoritesCount + (isFavorite ? -1 : 1));
             });
           },
           child:

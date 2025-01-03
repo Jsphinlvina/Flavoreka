@@ -100,7 +100,13 @@ class _AccountScreenState extends State<AccountScreen> {
       },
     );
 
-    if (result == true && inputUsername == username) {
+    if (result == true) {
+      if (inputUsername != username) {
+        _showErrorDialog(context, "Username doesn't match",
+            "The username you entered is incorrect. Please try again.");
+        return;
+      }
+
       try {
         await userProvider.deleteCurrentUser(inputPassword); // Kirim password
         await authService.logout();
@@ -109,17 +115,34 @@ class _AccountScreenState extends State<AccountScreen> {
           Navigator.pushReplacementNamed(context, '/login');
         }
       } catch (e) {
-        messenger.showSnackBar(
-          SnackBar(content: Text("Failed to delete account: $e")),
-        );
+        if (e.toString().contains("invalid-credential")) {
+          _showErrorDialog(context, "Invalid Password",
+              "The password you entered is incorrect. Please try again.");
+        } else {
+          messenger.showSnackBar(
+            SnackBar(content: Text("Failed to delete account: $e")),
+          );
+        }
       }
-    } else if (result == true) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text("Username doesn't match. Deletion cancelled."),
-        ),
-      );
     }
+  }
+
+  void _showErrorDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

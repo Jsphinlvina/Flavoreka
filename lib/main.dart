@@ -39,7 +39,7 @@ class MainApp extends StatelessWidget {
             Provider.of<AuthService>(context, listen: false).currentUser?.uid ??
                 '',
           ),
-          update: (context, authService, previous) => FavoriteProvider(
+          update: (_, authService, previous) => FavoriteProvider(
             FavoriteController(),
             authService.currentUser?.uid ?? '',
           ),
