@@ -1,3 +1,4 @@
+import 'package:flavoreka/providers/favorite_provider.dart';
 import 'package:flavoreka/providers/user_data_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -24,7 +25,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _signUp() async {
     if (_formKey.currentState!.validate()) {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+      final userDataProvider =
+          Provider.of<UserDataProvider>(context, listen: false);
 
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
@@ -32,10 +34,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final username = _usernameController.text.trim();
 
       // Validasi username unik
-      final isUniqueUsername = await userDataProvider.checkUsernameUniqueness(username);
+      final isUniqueUsername =
+          await userDataProvider.checkUsernameUniqueness(username);
       if (!isUniqueUsername) {
         setState(() {
-          _usernameError = "Username is already taken. Please choose another one.";
+          _usernameError =
+              "Username is already taken. Please choose another one.";
         });
         return;
       }
@@ -44,7 +48,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final isUniqueEmail = await userDataProvider.checkEmailUniqueness(email);
       if (!isUniqueEmail) {
         setState(() {
-          _emailError = "This email is already registered. Please use another one.";
+          _emailError =
+              "This email is already registered. Please use another one.";
         });
         return;
       }
@@ -61,6 +66,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Account created successfully!")),
           );
+          Provider.of<FavoriteProvider>(context, listen: false).userId =
+              user.uid;
           Navigator.pushReplacementNamed(context, '/home');
         }
       } catch (e) {
@@ -100,8 +107,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       _usernameError = null; // Reset error saat user mengetik
                     });
                   },
-                  validator: (value) =>
-                      value == null || value.isEmpty ? "Enter a username" : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? "Enter a username"
+                      : null,
                 ),
                 TextFormField(
                   controller: _emailController,
@@ -114,8 +122,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       _emailError = null; // Reset error saat user mengetik
                     });
                   },
-                  validator: (value) =>
-                      value == null || value.isEmpty ? "Enter your email" : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? "Enter your email"
+                      : null,
                 ),
                 TextFormField(
                   controller: _passwordController,
@@ -134,7 +143,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       return "Enter a password";
                     } else if (value.length < 6) {
                       setState(() {
-                        _passwordError = "Password must be at least 6 characters.";
+                        _passwordError =
+                            "Password must be at least 6 characters.";
                       });
                       return null;
                     }

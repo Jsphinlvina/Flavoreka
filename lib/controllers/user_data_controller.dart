@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flavoreka/controllers/favorite_controller.dart';
 import 'package:flavoreka/controllers/recipe_controller.dart';
+import 'package:flavoreka/models/recipe_model.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/user_data_model.dart';
 import '../utils/auth_service.dart';
@@ -10,6 +11,8 @@ import '../utils/auth_service.dart';
 class UserDataController {
   final CollectionReference _userCollection =
       FirebaseFirestore.instance.collection('users');
+  final CollectionReference _recipeCollection =
+      FirebaseFirestore.instance.collection('recipes');
   final AuthService _authService;
 
   final RecipeController _recipeController;
@@ -140,16 +143,29 @@ class UserDataController {
 
       await user.reauthenticateWithCredential(credential);
 
+      // Menghus semua favorite
+      final userDoc = await _userCollection.doc(userId).get();
+      final favoriteRecipeIds =
+          List<String>.from(userDoc['favoriteRecipes'] ?? []);
+
+      // Remove favorites for each recipe
+      for (var recipeId in favoriteRecipeIds) {
+        final recipeSnapshot = await _recipeCollection.doc(recipeId).get();
+        if (recipeSnapshot.exists) {
+          final recipeData = Recipe.fromFirestore(
+              recipeSnapshot.data() as Map<String, dynamic>, recipeId);
+
+          await _favoriteController.removeFavorite(userId, recipeData);
+        }
+      }
+
       // Menghapus semua resep yang dibuat oleh pengguna
       final allRecipes = await _recipeController.getAllRecipes();
       for (var recipe in allRecipes) {
         if (recipe.userId == userId) {
           await _recipeController.deleteRecipe(recipe.id);
+          await _favoriteController.removeFavoritesByRecipe(recipe.id);
         }
-      }
-
-      for (var recipe in allRecipes) {
-        await _favoriteController.removeFavoritesByRecipe(recipe.id);
       }
 
       await _userCollection.doc(userId).delete();

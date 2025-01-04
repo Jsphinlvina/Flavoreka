@@ -95,10 +95,15 @@ class FavoriteController {
         .where('favoriteRecipes', arrayContains: recipeId)
         .get();
 
+    WriteBatch batch = FirebaseFirestore.instance.batch();
+
+    // Hapus recipeId dari setiap pengguna yang memiliki di favorit
     for (var userDoc in usersWithFavorites.docs) {
-      await _userCollection.doc(userDoc.id).update({
+      final userRef = _userCollection.doc(userDoc.id);
+      batch.update(userRef, {
         'favoriteRecipes': FieldValue.arrayRemove([recipeId])
       });
     }
+    await batch.commit();
   }
 }
