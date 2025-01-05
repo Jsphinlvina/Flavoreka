@@ -44,13 +44,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
     final authService = Provider.of<AuthService>(context, listen: false);
     final currentUserId = authService.currentUser?.uid;
-    final favoriteProvider = Provider.of<FavoriteProvider>(context);
 
     // Format tanggal untuk createdAt
     final String formattedDate =
         DateFormat('yyyy-MM-dd').format(recipe.createdAt);
-
-    final isFavorite = favoriteProvider.isFavorite(recipe.id);
 
     return Scaffold(
       appBar: AppBar(
@@ -166,40 +163,42 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ElevatedButton(
-          onPressed: () async {
-            if (currentUserId == null) {
-              // Arahkan pengguna ke halaman login
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-              return;
-            }
+      bottomNavigationBar: Consumer<FavoriteProvider>(
+        builder: (context, favoriteProvider, child) {
+          final isFavorite = favoriteProvider.isFavorite(recipe.id);
+          final currentUserId = favoriteProvider.userId;
 
-            if (isFavorite) {
-              await favoriteProvider.removeFavorite(recipe.id);
-            } else {
-              await favoriteProvider.addFavorite(recipe);
-            }
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: () async {
+                if (currentUserId.isEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
+                  );
+                  return;
+                }
 
-            // Refresh data
-            await Provider.of<RecipeProvider>(context, listen: false)
-                .fetchRecipes();
-            await Provider.of<FavoriteProvider>(context, listen: false)
-                .fetchFavorites();
+                if (isFavorite) {
+                  await favoriteProvider.removeFavorite(recipe.id);
+                } else {
+                  await favoriteProvider.addFavorite(recipe);
+                }
 
-            setState(() {
-              recipe = recipe.copyWith(
-                  favoritesCount:
-                      recipe.favoritesCount + (isFavorite ? -1 : 1));
-            });
-          },
-          child:
-              Text(isFavorite ? "Remove from Favorites" : "Add to Favorites"),
-        ),
+                setState(() {
+                  recipe = recipe.copyWith(
+                    favoritesCount:
+                        recipe.favoritesCount + (isFavorite ? -1 : 1),
+                  );
+                });
+              },
+              child: Text(
+                  isFavorite ? "Remove from Favorites" : "Add to Favorites"),
+            ),
+          );
+        },
       ),
     );
   }

@@ -214,11 +214,18 @@ class UserDataController {
     }
   }
 
-  Future<bool> isUsernameUnique(String username) async {
+  Future<bool> isUsernameUnique(String username, String currentUserId) async {
     final querySnapshot =
         await _userCollection.where('username', isEqualTo: username).get();
 
-    return querySnapshot.docs.isEmpty;
+    // Jika dokumen ditemukan, pastikan tidak termasuk user yang sedang login
+    for (var doc in querySnapshot.docs) {
+      if (doc.id != currentUserId) {
+        return false; // Username tidak unik
+      }
+    }
+
+    return true; // Username unik
   }
 
   // Validasi apakah email unik

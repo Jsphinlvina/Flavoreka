@@ -32,26 +32,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     final authService = Provider.of<AuthService>(context, listen: false);
+    final favoriteProvider =
+        Provider.of<FavoriteProvider>(context, listen: false);
+
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    try {
-      final user = await authService.login(email, password);
-
-      if (user != null) {
-        // Update userId di FavoriteProvider setelah login berhasil
-        Provider.of<FavoriteProvider>(context, listen: false).userId = user.uid;
-
-        // Navigasi ke halaman utama
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login failed. Please try again.")),
-        );
-      }
-    } catch (e) {
+    final user = await authService.login(email, password);
+    if (user != null) {
+      favoriteProvider.updateUserId(user.uid); // Update userId
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error during login: $e")),
+        const SnackBar(content: Text("Login failed. Please try again.")),
       );
     }
   }

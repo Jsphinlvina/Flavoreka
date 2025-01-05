@@ -118,7 +118,8 @@ class UserDataProvider extends ChangeNotifier {
 
   // Validasi username unik
   Future<bool> checkUsernameUniqueness(String username) async {
-    return await _controller.isUsernameUnique(username);
+    final currentUserId = _currentUserData?.id ?? '';
+    return await _controller.isUsernameUnique(username, currentUserId);
   }
 
   // Validasi email unik

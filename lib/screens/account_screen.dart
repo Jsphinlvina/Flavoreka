@@ -1,3 +1,4 @@
+import 'package:flavoreka/providers/favorite_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
@@ -30,7 +31,11 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _logout() async {
     final authService = Provider.of<AuthService>(context, listen: false);
+    final favoriteProvider =
+        Provider.of<FavoriteProvider>(context, listen: false);
+
     await authService.logout();
+    favoriteProvider.updateUserId(''); // Reset userId
     if (mounted) {
       Navigator.pushReplacementNamed(context, '/login');
     }

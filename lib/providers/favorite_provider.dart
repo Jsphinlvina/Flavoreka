@@ -15,8 +15,12 @@ class FavoriteProvider extends ChangeNotifier {
     return _favoriteRecipes.any((recipe) => recipe.id == recipeId);
   }
 
-  void updateUserId(String newUserId) {
+  void updateUserId(String newUserId) async {
     userId = newUserId;
+    _favoriteRecipes.clear(); // Bersihkan data lama
+    if (userId.isNotEmpty) {
+      await fetchFavorites(); // Ambil data favorit baru
+    }
     notifyListeners();
   }
 
