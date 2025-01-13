@@ -47,9 +47,7 @@ class _AccountScreenState extends State<AccountScreen> {
     final username = userProvider.currentUserData?.username ?? "";
 
     String inputUsername = "";
-    String inputPassword = ""; // Tambahkan input password
-
-    final messenger = ScaffoldMessenger.of(context);
+    String inputPassword = "";
 
     final result = await showDialog<bool>(
       context: context,
@@ -87,7 +85,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   labelText: "Password",
                   border: OutlineInputBorder(),
                 ),
-                obscureText: true, // Sembunyikan password
+                obscureText: true,
               ),
             ],
           ),
@@ -98,7 +96,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text("Delete", style: TextStyle(color: Colors.red)),
+              child: const Text("Delete"),
             ),
           ],
         );
@@ -113,21 +111,14 @@ class _AccountScreenState extends State<AccountScreen> {
       }
 
       try {
-        await userProvider.deleteCurrentUser(inputPassword); // Kirim password
+        await userProvider.deleteCurrentUser(inputPassword);
         await authService.logout();
 
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/login');
         }
       } catch (e) {
-        if (e.toString().contains("invalid-credential")) {
-          _showErrorDialog(context, "Invalid Password",
-              "The password you entered is incorrect. Please try again.");
-        } else {
-          messenger.showSnackBar(
-            SnackBar(content: Text("Failed to delete account: $e")),
-          );
-        }
+        _showErrorDialog(context, "Error", "Failed to delete account: $e");
       }
     }
   }
@@ -157,13 +148,12 @@ class _AccountScreenState extends State<AccountScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Account Information"),
+        title: const Text("Account"),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: _logout,
-            tooltip: 'Logout',
           ),
         ],
       ),
@@ -172,9 +162,10 @@ class _AccountScreenState extends State<AccountScreen> {
           : userData == null
               ? const Center(child: Text("No user data found"))
               : Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 20.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Center(
                         child: FutureBuilder<File?>(
@@ -186,17 +177,15 @@ class _AccountScreenState extends State<AccountScreen> {
                             } else if (snapshot.hasError ||
                                 snapshot.data == null) {
                               return CircleAvatar(
-                                radius: 60,
-                                backgroundColor: Colors.grey.shade300,
+                                radius: 80,
                                 child: const Icon(
                                   Icons.account_circle,
-                                  size: 60,
-                                  color: Colors.grey,
+                                  size: 80,
                                 ),
                               );
                             } else {
                               return CircleAvatar(
-                                radius: 60,
+                                radius: 80,
                                 backgroundImage: FileImage(snapshot.data!),
                               );
                             }
@@ -204,73 +193,85 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Text("Name: ${userData.name}",
-                          style: const TextStyle(fontSize: 18)),
-                      Text("Username: ${userData.username}",
-                          style: const TextStyle(fontSize: 18)),
-                      Text("Email: ${userData.email}",
-                          style: const TextStyle(fontSize: 18)),
-                      Text("Recipes Created: ${userData.createRecipes}",
-                          style: const TextStyle(fontSize: 18)),
                       Text(
-                          "Favorite Recipes: ${userData.favoriteRecipes.length} recipes",
-                          style: const TextStyle(fontSize: 18)),
+                        userData.name,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       Text(
-                          "Created At: ${userData.createdAt.toLocal().toString().split(' ')[0]}",
-                          style: const TextStyle(fontSize: 18)),
+                        "@${userData.username}",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ListTile(
+                        leading: const Icon(Icons.email),
+                        title: Text(userData.email),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.food_bank),
+                        title:
+                            Text("Recipes Created: ${userData.createRecipes}"),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.favorite),
+                        title: Text(
+                          "Favorite Recipes: ${userData.favoriteRecipes.length}",
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.calendar_today),
+                        title: Text(
+                          "Joined: ${userData.createdAt.toLocal().toString().split(' ')[0]}",
+                        ),
+                      ),
                       const SizedBox(height: 30),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Expanded(
-                            child: SizedBox(
-                              height: 50,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const EditUserScreen()),
-                                  );
-                                },
-                                child: const Text("Edit Profile"),
-                              ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EditUserScreen()),
+                                );
+                              },
+                              child: const Text("Edit Profile"),
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: SizedBox(
-                              height: 50,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ResetPasswordScreen()),
-                                  );
-                                },
-                                child: const Text('Reset Password'),
-                              ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ResetPasswordScreen()),
+                                );
+                              },
+                              child: const Text('Reset Password'),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
-                      Center(
-                        child: SizedBox(
-                          height: 50,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                            ),
-                            onPressed: () => _deleteAccount(context),
-                            child: const Text(
-                              "Delete Account",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
+                      ElevatedButton(
+                        onPressed: () => _deleteAccount(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          minimumSize: const Size(200, 50),
+                        ),
+                        child: const Text(
+                          "Delete Account",
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
                     ],

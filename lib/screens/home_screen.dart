@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
 import '../providers/recipe_provider.dart';
+import '../providers/user_data_provider.dart';
 import '../widgets/navbar.dart';
 import 'recipe_detail_screen.dart';
 
@@ -14,11 +15,31 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = "";
+  Map<String, String> userIdToUsername = {}; // userId -> username
 
   @override
   void initState() {
     super.initState();
-    Provider.of<RecipeProvider>(context, listen: false).fetchRecipes();
+    final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
+
+    recipeProvider.fetchRecipes().then((_) async {
+      final userIds =
+          recipeProvider.recipes.map((recipe) => recipe.userId).toList();
+      await fetchUsernames(userIds);
+      setState(() {});
+    });
+  }
+
+  Future<void> fetchUsernames(List<String> userIds) async {
+    final userDataProvider =
+        Provider.of<UserDataProvider>(context, listen: false);
+
+    for (var userId in userIds) {
+      final username = await userDataProvider.getUsernameById(userId);
+      if (username != null) {
+        userIdToUsername[userId] = username;
+      }
+    }
   }
 
   @override
@@ -32,9 +53,12 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, recipeProvider, _) {
           final filteredRecipes = recipeProvider.recipes.where((recipe) {
             final query = _searchQuery.toLowerCase();
+            final username =
+                userIdToUsername[recipe.userId]?.toLowerCase() ?? '';
             return recipe.title.toLowerCase().contains(query) ||
                 recipe.ingredients.any(
-                    (ingredient) => ingredient.toLowerCase().contains(query));
+                    (ingredient) => ingredient.toLowerCase().contains(query)) ||
+                username.contains(query);
           }).toList();
 
           return Column(
@@ -61,29 +85,25 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: filteredRecipes.isEmpty
                     ? const Center(child: Text("No recipes found"))
-                    : ListView.builder(
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(8.0),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 4 / 5,
+                        ),
                         itemCount: filteredRecipes.length,
                         itemBuilder: (context, index) {
                           final recipe = filteredRecipes[index];
                           return FutureBuilder<File?>(
-                            future: Provider.of<RecipeProvider>(context, listen: false).loadImage(recipe.imageUrl),
+                            future: Provider.of<RecipeProvider>(context,
+                                    listen: false)
+                                .loadImage(recipe.imageUrl),
                             builder: (context, snapshot) {
                               final localImage = snapshot.data;
-                              return ListTile(
-                                leading: localImage != null
-                                    ? Image.file(
-                                        localImage,
-                                        width: 50,
-                                        height: 50,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : const Icon(Icons.image_not_supported),
-                                title: Text(recipe.title),
-                                subtitle: Text("Favorites: ${recipe.favoritesCount}"),
-                                trailing: Text(recipe.createdAt
-                                    .toLocal()
-                                    .toString()
-                                    .split(' ')[0]),
+                              return GestureDetector(
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -93,6 +113,93 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   );
                                 },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(16),
+                                          topRight: Radius.circular(16),
+                                        ),
+                                        child: localImage != null
+                                            ? Image.file(
+                                                localImage,
+                                                width: double.infinity,
+                                                height: 120,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Container(
+                                                width: double.infinity,
+                                                height: 120,
+                                                color: Colors.grey.shade200,
+                                                child: const Icon(
+                                                  Icons.image_not_supported,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              recipe.title,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              "by ${userIdToUsername[recipe.userId] ?? 'Unknown'}",
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                const Icon(
+                                                  Icons.favorite_border,
+                                                  size: 16,
+                                                  color: Colors.grey,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  "${recipe.favoritesCount}",
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               );
                             },
                           );

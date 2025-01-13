@@ -1,7 +1,7 @@
-import 'package:flavoreka/providers/favorite_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/auth_service.dart';
+import '../providers/favorite_provider.dart';
 import 'sign_up_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -61,34 +61,84 @@ class _LoginScreenState extends State<LoginScreen> {
           },
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              "Welcome Back!",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Login to your account",
+              style: TextStyle(
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 24),
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(labelText: "Email"),
+              decoration: InputDecoration(
+                labelText: "Email",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+              ),
             ),
+            const SizedBox(height: 16),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: "Password"),
+              decoration: InputDecoration(
+                labelText: "Password",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+              ),
               obscureText: true,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+              ),
               onPressed: _login,
-              child: const Text("Login"),
+              child: const Text(
+                "Login",
+                style: TextStyle(fontSize: 18),
+              ),
             ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SignUpScreen()),
-                );
-              },
-              child: const Text("Don't have an account? Sign Up"),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Don't have an account? ",
+                  style: TextStyle(fontSize: 16),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SignUpScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Sign Up",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

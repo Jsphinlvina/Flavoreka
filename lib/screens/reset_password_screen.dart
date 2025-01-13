@@ -36,63 +36,84 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         title: const Text("Reset Password"),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        child: Form(
+          key: _formKey,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const Text("Manage Password"),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      decoration: InputDecoration(
-                        hintText: "Current Password",
-                        errorText: _checkCurrentPasswordValid
-                            ? null
-                            : "Current password is incorrect.",
-                      ),
-                      controller: _currentPasswordController,
-                      obscureText: true,
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      decoration:
-                          const InputDecoration(hintText: "New Password"),
-                      controller: _newPasswordController,
-                      obscureText: true,
-                      validator: (value) {
-                        if (value == null || value.length < 6) {
-                          return "Password must be at least 6 characters.";
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      decoration:
-                          const InputDecoration(hintText: "Repeat Password"),
-                      controller: _repeatPasswordController,
-                      obscureText: true,
-                      validator: (value) {
-                        if (value != _newPasswordController.text) {
-                          return "Passwords do not match.";
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Manage Password",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
+              const Text(
+                "Change your password securely",
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 24),
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: "Current Password",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  errorText: _checkCurrentPasswordValid
+                      ? null
+                      : "Current password is incorrect.",
+                ),
+                controller: _currentPasswordController,
+                obscureText: true,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: "New Password",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                ),
+                controller: _newPasswordController,
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.length < 6) {
+                    return "Password must be at least 6 characters.";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: "Repeat Password",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                ),
+                controller: _repeatPasswordController,
+                obscureText: true,
+                validator: (value) {
+                  if (value != _newPasswordController.text) {
+                    return "Passwords do not match.";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                ),
                 onPressed: () async {
-                  // Validate current password
                   _checkCurrentPasswordValid = await userProvider
-                      .validateCurrentPassword(_currentPasswordController.text);
+                      .validateCurrentPassword(
+                          _currentPasswordController.text);
                   setState(() {});
 
                   if (_formKey.currentState!.validate() &&
@@ -102,7 +123,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           .updatePassword(_newPasswordController.text);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text("Password updated successfully.")),
+                          content: Text("Password updated successfully."),
+                        ),
                       );
                       Navigator.pop(context);
                     } catch (e) {
@@ -112,7 +134,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     }
                   }
                 },
-                child: const Text("Save Changes"),
+                child: const Text(
+                  "Save Changes",
+                  style: TextStyle(fontSize: 18),
+                ),
               ),
             ],
           ),

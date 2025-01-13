@@ -44,14 +44,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     final recipeProvider = Provider.of<RecipeProvider>(context, listen: false);
     final authService = Provider.of<AuthService>(context, listen: false);
     final currentUserId = authService.currentUser?.uid;
-
-    // Format tanggal untuk createdAt
     final String formattedDate =
         DateFormat('yyyy-MM-dd').format(recipe.createdAt);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(recipe.title),
+        title: const Text("Recipe Details"),
         actions: [
           if (currentUserId == recipe.userId) ...[
             IconButton(
@@ -117,49 +115,116 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _localImage != null
-                ? Image.file(
-                    _localImage!,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      _localImage!,
+                      height: 250,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
                   )
-                : const Icon(Icons.image_not_supported, size: 100),
-            const SizedBox(height: 16),
+                : Container(
+                    height: 250,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      size: 100,
+                    ),
+                  ),
+            const SizedBox(height: 20),
             Text(
               recipe.title,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
-            Text("Favorites: ${recipe.favoritesCount}"),
-            Text("Created at: $formattedDate"),
-            FutureBuilder<String?>(
-              future: authService.getUsernameById(recipe.userId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Text("Made by: Loading...");
-                } else if (snapshot.hasError) {
-                  return const Text("Made by: Unknown");
-                } else {
-                  final username = snapshot.data ?? "Flavoreka";
-                  return Text("Made by: $username");
-                }
-              },
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                FutureBuilder<String?>(
+                  future: authService.getUsernameById(recipe.userId),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Text("Made by: Loading...");
+                    } else if (snapshot.hasError) {
+                      return const Text("Made by: Unknown");
+                    } else {
+                      final username = snapshot.data ?? "Unknown";
+                      return Text(
+                        "Made by: $username",
+                        style: const TextStyle(fontSize: 16),
+                      );
+                    }
+                  },
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const Icon(
+                      Icons.favorite_border,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      "${recipe.favoritesCount}",
+                      style: const TextStyle(
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            Text(
+              "Created at: $formattedDate",
+              style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+            ),
+            const Divider(height: 32, thickness: 1),
             const Text(
               "Ingredients:",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            for (var ingredient in recipe.ingredients)
-              Text("- $ingredient", style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            ...recipe.ingredients.map((ingredient) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4.0),
+                  child: Text("- $ingredient",
+                      style: const TextStyle(fontSize: 16)),
+                )),
+            const Divider(height: 32, thickness: 1),
             const Text(
               "Steps:",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            for (var step in recipe.steps)
-              Text("${recipe.steps.indexOf(step) + 1}. $step",
-                  style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            ...recipe.steps.map((step) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "${recipe.steps.indexOf(step) + 1}. ",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          step,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
           ],
         ),
       ),
@@ -169,8 +234,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           final currentUserId = favoriteProvider.userId;
 
           return Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(12.0),
             child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               onPressed: () async {
                 if (currentUserId.isEmpty) {
                   Navigator.push(
@@ -187,6 +257,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   await favoriteProvider.addFavorite(recipe);
                 }
 
+                await recipeProvider.fetchRecipes();
+
                 setState(() {
                   recipe = recipe.copyWith(
                     favoritesCount:
@@ -195,7 +267,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 });
               },
               child: Text(
-                  isFavorite ? "Remove from Favorites" : "Add to Favorites"),
+                isFavorite ? "Remove from Favorites" : "Add to Favorites",
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
           );
         },

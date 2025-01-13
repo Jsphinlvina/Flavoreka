@@ -54,7 +54,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
         await recipeProvider.updateRecipe(
           recipe: widget.recipe,
           title: _titleController.text,
-          imageFile: _selectedImage, // Gunakan gambar jika ada
+          imageFile: _selectedImage, // Use the updated image if any
           ingredients: _ingredientsController.text,
           steps: _stepsController.text,
         );
@@ -82,23 +82,15 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       appBar: AppBar(
         title: const Text("Edit Recipe"),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(labelText: "Title"),
-                  validator: (value) => value == null || value.isEmpty
-                      ? "Please enter a title"
-                      : null,
-                ),
-                const SizedBox(height: 10),
-                GestureDetector(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: GestureDetector(
                   onTap: () async {
                     showModalBottomSheet(
                       context: context,
@@ -125,36 +117,93 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                       ),
                     );
                   },
-                  child: _selectedImage == null
-                      ? Container(
-                          height: 200,
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: Text("Tap to select an image"),
-                          ),
-                        )
-                      : Image.file(
-                          _selectedImage!,
-                          height: 200,
-                          fit: BoxFit.cover,
-                        ),
+                  child: CircleAvatar(
+                    radius: 80,
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage:
+                        _selectedImage != null ? FileImage(_selectedImage!) : null,
+                    child: _selectedImage == null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.add_a_photo,
+                                size: 30,
+                                color: Colors.black54,
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                "Tap to select an image",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          )
+                        : null,
+                  ),
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _ingredientsController,
-                  decoration: const InputDecoration(labelText: "Ingredients"),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Recipe Details",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
-                TextFormField(
-                  controller: _stepsController,
-                  decoration: const InputDecoration(labelText: "Steps"),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: "Title",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                  ),
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _submitRecipe,
-                  child: const Text("Save Changes"),
+                validator: (value) => value == null || value.isEmpty
+                    ? "Please enter a title"
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _ingredientsController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  labelText: "Ingredients (separate each with a dot: .)",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                  ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _stepsController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  labelText: "Steps (separate each with a semicolon: ;) ",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                ),
+                onPressed: _submitRecipe,
+                child: const Text(
+                  "Save Changes",
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+            ],
           ),
         ),
       ),

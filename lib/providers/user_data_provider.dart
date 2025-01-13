@@ -40,6 +40,17 @@ class UserDataProvider extends ChangeNotifier {
     }
   }
 
+  Future<String?> getUsernameById(String userId) async {
+  try {
+    final userData = await _controller.getUserData(userId);
+    return userData?.username;
+  } catch (e) {
+    print("Error fetching username for $userId: $e");
+    return null;
+  }
+}
+
+
   // Membuat data user baru
   Future<void> createUserData({
     required String id,
